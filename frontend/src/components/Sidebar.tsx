@@ -40,6 +40,12 @@ const Icons = {
       <line x1="8" y1="10" x2="9" y2="10"/><line x1="15" y1="10" x2="16" y2="10"/>
     </svg>
   ),
+  profile: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+      <circle cx="12" cy="7" r="4"/>
+    </svg>
+  ),
   logout: (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -56,6 +62,10 @@ const NAV_ITEMS = [
   { id: 'blockchain', label: 'Blockchain Log', icon: Icons.blockchain },
 ];
 
+const BOTTOM_NAV = [
+  { id: 'profile', label: 'My Profile', icon: Icons.profile },
+];
+
 export default function Sidebar({ activePage, onNavigate, onLogout, walletAddress }: SidebarProps) {
   const shortAddr = walletAddress
     ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`
@@ -67,14 +77,29 @@ export default function Sidebar({ activePage, onNavigate, onLogout, walletAddres
       {/* Logo */}
       <div className="logo">
         <div className="logo-icon">🔐</div>
-        <div className="logo-text">CryptoVault</div>
-        <div className="logo-sub">Integrity Verified</div>
+        <div>
+          <div className="logo-text">CryptoVault</div>
+          <div className="logo-sub">Integrity Verified</div>
+        </div>
       </div>
 
-      {/* Nav */}
+      {/* Main Nav */}
       <nav className="nav">
         <div className="nav-section">Main Menu</div>
         {NAV_ITEMS.map(item => (
+          <div
+            key={item.id}
+            className={`nav-item ${activePage === item.id ? 'active' : ''}`}
+            onClick={() => onNavigate(item.id)}
+          >
+            <span className="nav-icon">{item.icon}</span>
+            <span>{item.label}</span>
+            {activePage === item.id && <span className="nav-active-dot" />}
+          </div>
+        ))}
+
+        <div className="nav-section" style={{ marginTop: 8 }}>Account</div>
+        {BOTTOM_NAV.map(item => (
           <div
             key={item.id}
             className={`nav-item ${activePage === item.id ? 'active' : ''}`}
@@ -89,8 +114,6 @@ export default function Sidebar({ activePage, onNavigate, onLogout, walletAddres
 
       {/* Bottom */}
       <div className="sidebar-bottom">
-
-        {/* Chain Status */}
         <div className="chain-status">
           <div className="chain-status-row">
             <span className="chain-dot" />
@@ -99,7 +122,6 @@ export default function Sidebar({ activePage, onNavigate, onLogout, walletAddres
           <div className="chain-network">Network Connected</div>
         </div>
 
-        {/* Wallet Info */}
         <div className="wallet-info">
           <div className="wallet-info-icon">🦊</div>
           <div className="wallet-info-details">
@@ -108,13 +130,12 @@ export default function Sidebar({ activePage, onNavigate, onLogout, walletAddres
           </div>
         </div>
 
-        {/* Logout */}
         <button className="logout-btn" onClick={onLogout}>
           <span className="logout-icon">{Icons.logout}</span>
           <span>Disconnect Wallet</span>
         </button>
-
       </div>
+
     </aside>
   );
 }

@@ -9,6 +9,8 @@ import Upload        from './pages/Upload';
 import Verify        from './pages/Verify';
 import Files         from './pages/Files';
 import BlockchainLog from './pages/BlockchainLog';
+import Profile       from './pages/Profile';
+import NotFound      from './pages/NotFound';
 
 const NAV_LABELS: Record<string, string> = {
   dashboard:  'Dashboard',
@@ -16,7 +18,10 @@ const NAV_LABELS: Record<string, string> = {
   verify:     'Verify File',
   files:      'My Files',
   blockchain: 'Blockchain Log',
+  profile:    'My Profile',
 };
+
+const VALID_PAGES = ['dashboard', 'upload', 'verify', 'files', 'blockchain', 'profile'];
 
 export default function App() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
@@ -28,15 +33,24 @@ export default function App() {
     setTimeout(() => setNotification(null), 4000);
   };
 
+  const handleNavigate = (page: string) => {
+    if (VALID_PAGES.includes(page)) {
+      setActivePage(page);
+    } else {
+      setActivePage('404');
+    }
+  };
+
   const handleConnected = (address: string) => {
     setWalletAddress(address);
     setActivePage('dashboard');
     showNotif('✅ Wallet connected successfully!', 'success');
   };
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     setWalletAddress(null);
     setActivePage('dashboard');
+    showNotif('👋 Wallet disconnected.', 'info');
   };
 
   // ── Not logged in ──
@@ -49,7 +63,8 @@ export default function App() {
     );
   }
 
-  // ── Logged in ──
+  const pageTitle = NAV_LABELS[activePage] || 'Not Found';
+
   return (
     <>
       <div className="grid-bg" />
@@ -58,24 +73,26 @@ export default function App() {
       <div className="app">
         <Sidebar
           activePage={activePage}
-          onNavigate={setActivePage}
+          onNavigate={handleNavigate}
           onLogout={handleLogout}
           walletAddress={walletAddress}
         />
 
         <main className="main">
           <Topbar
-            pageTitle={NAV_LABELS[activePage]}
+            pageTitle={pageTitle}
             walletAddress={walletAddress}
             onDisconnect={handleLogout}
           />
 
           <div className="content">
-            {activePage === 'dashboard'  && <Dashboard     onNavigate={setActivePage} />}
+            {activePage === 'dashboard'  && <Dashboard     onNavigate={handleNavigate} />}
             {activePage === 'upload'     && <Upload        onNotify={showNotif} />}
             {activePage === 'verify'     && <Verify        onNotify={showNotif} />}
-            {activePage === 'files'      && <Files         onNavigate={setActivePage} />}
+            {activePage === 'files'      && <Files         onNavigate={handleNavigate} />}
             {activePage === 'blockchain' && <BlockchainLog />}
+            {activePage === 'profile'    && <Profile       walletAddress={walletAddress} onNavigate={handleNavigate} />}
+            {activePage === '404'        && <NotFound      onNavigate={handleNavigate} />}
           </div>
         </main>
       </div>
