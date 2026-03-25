@@ -1,11 +1,5 @@
 import '../styles/Topbar.css';
 
-interface TopbarProps {
-  pageTitle: string;
-  walletAddress: string;
-  onDisconnect: () => void;
-}
-
 const BellIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -13,7 +7,7 @@ const BellIcon = () => (
   </svg>
 );
 
-export default function Topbar({ pageTitle, walletAddress, onDisconnect }: TopbarProps) {
+export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
   const shortAddress = walletAddress
     ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`
     : '';

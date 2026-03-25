@@ -3,8 +3,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Upload.css';
 import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../utils/animations';
 
-interface UploadProps { onNotify: (msg: string, type: string) => void; }
-
 const STEPS = [
   { label: 'Encrypt', desc: 'AES-256'    },
   { label: 'Hash',    desc: 'SHA-256'    },
@@ -19,21 +17,21 @@ const LAYERS = [
   { icon: '⛓️', layer: 'Layer 3', title: 'Blockchain Seal',     color: 'var(--green)',  desc: 'Hash stored permanently on Ethereum. Immutable and tamper-proof forever.' },
 ];
 
-export default function Upload({ onNotify }: UploadProps) {
+export default function Upload({ onNotify }) {
   const [dragging,       setDragging]       = useState(false);
-  const [selectedFile,   setSelectedFile]   = useState<File | null>(null);
+  const [selectedFile,   setSelectedFile]   = useState(null);
   const [uploading,      setUploading]      = useState(false);
   const [uploadStep,     setUploadStep]     = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [generatedHash,  setGeneratedHash]  = useState<string | null>(null);
-  const [txHash,         setTxHash]         = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [generatedHash,  setGeneratedHash]  = useState(null);
+  const [txHash,         setTxHash]         = useState(null);
+  const fileInputRef = useRef(null);
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e) => {
     if (e.target.files?.[0]) { setSelectedFile(e.target.files[0]); setGeneratedHash(null); setTxHash(null); }
   };
 
-  const handleDrop = (e: React.DragEvent) => {
+  const handleDrop = (e) => {
     e.preventDefault(); setDragging(false);
     if (e.dataTransfer.files[0]) setSelectedFile(e.dataTransfer.files[0]);
   };
@@ -53,7 +51,7 @@ export default function Upload({ onNotify }: UploadProps) {
   };
 
   const reset = () => { setSelectedFile(null); setUploadStep(0); setUploadProgress(0); setGeneratedHash(null); setTxHash(null); };
-  const formatSize = (b: number) => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(2) + ' MB';
+  const formatSize = (b) => b < 1024 ? b + ' B' : b < 1048576 ? (b/1024).toFixed(1) + ' KB' : (b/1048576).toFixed(2) + ' MB';
 
   return (
     <motion.div className="page-container" variants={pageVariants} initial="initial" animate="animate">
@@ -151,7 +149,7 @@ export default function Upload({ onNotify }: UploadProps) {
                 ].map((item, i) => (
                   <motion.div key={i} className="result-item" initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay: i * 0.1 }}>
                     <div className="result-label">{item.label}</div>
-                    <div className="result-value" style={{ color: (item as any).color || 'var(--text)' }}>{item.value}</div>
+                    <div className="result-value" style={{ color: item.color || 'var(--text)' }}>{item.value}</div>
                   </motion.div>
                 ))}
               </div>

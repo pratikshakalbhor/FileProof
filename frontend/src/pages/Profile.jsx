@@ -1,11 +1,6 @@
-import React from 'react';
+import '../styles/Profile.css';
 
-interface ProfileProps {
-  walletAddress: string | null;
-  onNavigate: (page: string) => void;
-}
-
-export default function Profile({ walletAddress, onNavigate }: ProfileProps) {
+export default function Profile({ walletAddress, onNavigate }) {
   return (
     <div className="page-container">
       <div className="section-card">

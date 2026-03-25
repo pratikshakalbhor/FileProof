@@ -14,7 +14,7 @@ import Profile       from './pages/Profile';
 import NotFound      from './pages/NotFound';
 import { notifVariants } from './utils/animations';
 
-const NAV_LABELS: Record<string, string> = {
+const NAV_LABELS = {
   dashboard:  'Dashboard',
   upload:     'Upload & Seal',
   verify:     'Verify File',
@@ -26,23 +26,23 @@ const NAV_LABELS: Record<string, string> = {
 const VALID_PAGES = ['dashboard','upload','verify','files','blockchain','profile'];
 
 export default function App() {
-  const [walletAddress, setWalletAddress] = useState<string | null>(null);
+  const [walletAddress, setWalletAddress] = useState(null);
   const [activePage,    setActivePage]    = useState('dashboard');
-  const [notification,  setNotification]  = useState<{ msg: string; type: string } | null>(null);
+  const [notification,  setNotification]  = useState(null);
 
-  const showNotif = (msg: string, type: string) => {
+  const showNotif = (msg, type) => {
     setNotification({ msg, type });
     setTimeout(() => setNotification(null), 4000);
   };
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = (page) => {
     setActivePage(VALID_PAGES.includes(page) ? page : '404');
   };
 
-  const handleConnected = (address: string) => {
+  const handleConnected = (address) => {
     setWalletAddress(address);
     setActivePage('dashboard');
-    showNotif('✅ Wallet connected successfully!', 'success');
+    showNotif(' Wallet connected successfully!', 'success');
   };
 
   const handleLogout = () => {

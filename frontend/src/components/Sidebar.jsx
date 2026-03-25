@@ -2,13 +2,6 @@ import { motion } from 'framer-motion';
 import '../styles/Sidebar.css';
 import { slideLeft, staggerContainer, cardVariants } from '../utils/animations';
 
-interface SidebarProps {
-  activePage: string;
-  onNavigate: (page: string) => void;
-  onLogout: () => void;
-  walletAddress: string;
-}
-
 const Icons = {
   dashboard:  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
   upload:     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>,
@@ -31,7 +24,7 @@ const ACCOUNT_NAV = [
   { id: 'profile', label: 'My Profile', icon: Icons.profile },
 ];
 
-export default function Sidebar({ activePage, onNavigate, onLogout, walletAddress }: SidebarProps) {
+export default function Sidebar({ activePage, onNavigate, onLogout, walletAddress }) {
   const shortAddr = walletAddress
     ? `${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`
     : '';

@@ -3,17 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Login.css';
 import { scalePop, cardVariants, staggerContainer, fadeIn } from '../utils/animations';
 
-interface LoginProps { onConnected: (address: string) => void; }
-type WalletStatus = 'idle' | 'connecting' | 'connected' | 'error';
-
 const WALLETS = [
   { id: 'metamask',      name: 'MetaMask',       desc: 'Connect using browser extension', icon: '🦊', popular: true  },
   { id: 'coinbase',      name: 'Coinbase Wallet', desc: 'Connect using Coinbase Wallet',   icon: '🔵', popular: false },
   { id: 'walletconnect', name: 'WalletConnect',   desc: 'Scan QR with any wallet',         icon: '🔗', popular: false },
 ];
 
-export default function Login({ onConnected }: LoginProps) {
-  const [status,           setStatus]           = useState<WalletStatus>('idle');
+export default function Login({ onConnected }) {
+  const [status,           setStatus]           = useState('idle');
   const [connectingWallet, setConnectingWallet] = useState('');
   const [error,            setError]            = useState('');
   const [address,          setAddress]          = useState('');
@@ -22,7 +19,7 @@ export default function Login({ onConnected }: LoginProps) {
     setStatus('connecting'); setConnectingWallet('MetaMask'); setError('');
     try {
       if (!window.ethereum) throw new Error('MetaMask not installed! Please install MetaMask extension.');
-      const accounts: string[] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+      const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
       if (!accounts.length) throw new Error('No accounts found. Please unlock MetaMask.');
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
       if (chainId !== '0xaa36a7') {
@@ -31,10 +28,10 @@ export default function Login({ onConnected }: LoginProps) {
       }
       setAddress(accounts[0]); setStatus('connected');
       setTimeout(() => onConnected(accounts[0]), 1500);
-    } catch (err: any) { setError(err.message || 'Connection failed.'); setStatus('error'); }
+    } catch (err) { setError(err.message || 'Connection failed.'); setStatus('error'); }
   };
 
-  const connectOther = async (name: string) => {
+  const connectOther = async (name) => {
     setStatus('connecting'); setConnectingWallet(name);
     await new Promise(r => setTimeout(r, 1500));
     setError(`${name} coming soon! Please use MetaMask.`); setStatus('error');
@@ -104,7 +101,7 @@ export default function Login({ onConnected }: LoginProps) {
           {/* CONNECTED */}
           {status === 'connected' && (
             <motion.div key="connected" variants={scalePop} initial="initial" animate="animate" className="connected-state">
-              <motion.div className="connected-check" initial={{ scale:0, rotate:-180 }} animate={{ scale:1, rotate:0 }} transition={{ duration:0.5, ease:[0.16,1,0.3,1] as any }}>✓</motion.div>
+              <motion.div className="connected-check" initial={{ scale:0, rotate:-180 }} animate={{ scale:1, rotate:0 }} transition={{ duration:0.5, ease:[0.16,1,0.3,1] }}>✓</motion.div>
               <motion.div initial={{ opacity:0, y:10 }} animate={{ opacity:1, y:0 }} transition={{ delay:0.2 }}>
                 <div style={{ fontSize:18, fontWeight:800, color:'var(--green)', marginBottom:8 }}>Connected!</div>
                 <div className="connected-address">{address.substring(0,6)}...{address.substring(address.length-4)}</div>
@@ -132,10 +129,4 @@ export default function Login({ onConnected }: LoginProps) {
       </motion.div>
     </div>
   );
-}
-
-declare global {
-  interface Window {
-    ethereum?: { request: (args: { method: string; params?: any[] }) => Promise<any>; on: (event: string, handler: (...args: any[]) => void) => void; };
-  }
 }

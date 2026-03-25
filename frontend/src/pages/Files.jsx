@@ -2,28 +2,11 @@ import { useState } from 'react';
 import '../styles/Files.css';
 import StatusBadge from '../components/StatusBadge';
 
-type StatusType = 'valid' | 'tampered' | 'pending';
-type FilterType  = 'all' | StatusType;
-
-interface FileRecord {
-  _id: string;
-  name: string;
-  type: string;
-  size: string;
-  hash: string;
-  txHash: string;
-  timestamp: string;
-  status: StatusType;
-  encrypted: boolean;
-}
-
-interface FilesProps { onNavigate: (page: string) => void; }
-
-export default function Files({ onNavigate }: FilesProps) {
-  const [files]        = useState<FileRecord[]>([]); // MongoDB se aayega
-  const [filter,       setFilter]       = useState<FilterType>('all');
+export default function Files({ onNavigate }) {
+  const [files]        = useState([]);
+  const [filter,       setFilter]       = useState('all');
   const [search,       setSearch]       = useState('');
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState(null);
 
   const filtered = files.filter(f => {
     const matchFilter = filter === 'all' || f.status === filter;
@@ -31,7 +14,7 @@ export default function Files({ onNavigate }: FilesProps) {
     return matchFilter && matchSearch;
   });
 
-  const count = (s: FilterType) =>
+  const count = (s) =>
     s === 'all' ? files.length : files.filter(f => f.status === s).length;
 
   return (
@@ -50,7 +33,7 @@ export default function Files({ onNavigate }: FilesProps) {
           />
         </div>
         <div className="filter-tabs">
-          {(['all', 'valid', 'tampered', 'pending'] as FilterType[]).map(f => (
+          {['all', 'valid', 'tampered', 'pending'].map(f => (
             <button
               key={f}
               className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'} sm`}

@@ -3,11 +3,7 @@ import '../styles/Loading.css';
 // ─────────────────────────────────────────
 // 1. Full Page Loading Overlay
 // ─────────────────────────────────────────
-interface LoadingOverlayProps {
-  message?: string;
-}
-
-export function LoadingOverlay({ message = 'Loading' }: LoadingOverlayProps) {
+export function LoadingOverlay({ message = 'Loading' }) {
   return (
     <div className="loading-overlay">
       <div className="loading-box">
@@ -60,13 +56,7 @@ export function PageSkeleton() {
 // ─────────────────────────────────────────
 // 4. Error Box
 // ─────────────────────────────────────────
-interface ErrorBoxProps {
-  title?: string;
-  message: string;
-  onRetry?: () => void;
-}
-
-export function ErrorBox({ title = 'Something went wrong', message, onRetry }: ErrorBoxProps) {
+export function ErrorBox({ title = 'Something went wrong', message, onRetry }) {
   return (
     <div className="error-box">
       <span className="error-icon">⚠️</span>
@@ -88,15 +78,7 @@ export function ErrorBox({ title = 'Something went wrong', message, onRetry }: E
 // ─────────────────────────────────────────
 // 5. Empty State
 // ─────────────────────────────────────────
-interface EmptyStateProps {
-  icon?: string;
-  title: string;
-  subtitle?: string;
-  actionLabel?: string;
-  onAction?: () => void;
-}
-
-export function EmptyState({ icon = '📂', title, subtitle, actionLabel, onAction }: EmptyStateProps) {
+export function EmptyState({ icon = '📂', title, subtitle, actionLabel, onAction }) {
   return (
     <div className="empty-state">
       <span className="empty-state-icon">{icon}</span>

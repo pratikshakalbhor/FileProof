@@ -1,10 +1,6 @@
 import '../styles/NotFound.css';
 
-interface NotFoundProps {
-  onNavigate: (page: string) => void;
-}
-
-export default function NotFound({ onNavigate }: NotFoundProps) {
+export default function NotFound({ onNavigate }) {
   return (
     <div className="notfound-page">
 

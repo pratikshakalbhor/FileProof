@@ -4,16 +4,9 @@ import '../styles/Dashboard.css';
 import StatusBadge from '../components/StatusBadge';
 import { pageVariants, staggerContainer, cardVariants, tableRow, fadeIn } from '../utils/animations';
 
-interface FileRecord {
-  _id: string; name: string; type: string; size: string;
-  hash: string; txHash: string; timestamp: string;
-  status: 'valid' | 'tampered' | 'pending'; encrypted: boolean;
-}
-interface DashboardProps { onNavigate: (page: string) => void; }
-
-export default function Dashboard({ onNavigate }: DashboardProps) {
-  const [files] = useState<FileRecord[]>([]);
-  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+export default function Dashboard({ onNavigate }) {
+  const [files] = useState([]);
+  const [hoveredRow, setHoveredRow] = useState(null);
 
   const totalFiles    = files.length;
   const validFiles    = files.filter(f => f.status === 'valid').length;

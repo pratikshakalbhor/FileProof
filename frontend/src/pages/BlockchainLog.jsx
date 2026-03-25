@@ -1,28 +1,15 @@
 import { useState } from 'react';
+import '../styles/BlockchainLog.css';
 
-type TxType = 'seal' | 'verify' | 'alert' | 'revoke';
-type TxFilter = 'all' | TxType;
 
-interface Transaction {
-  _id: string;
-  type: TxType;
-  icon: string;
-  action: string;
-  file: string;
-  hash: string;
-  block: string;
-  gas: string;
-  time: string;
-}
-
-const TYPE_COLOR: Record<TxType, string> = {
+const TYPE_COLOR = {
   seal: 'var(--accent)',
   verify: 'var(--green)',
   alert: 'var(--red)',
   revoke: 'var(--yellow)',
 };
 
-const TYPE_ICON: Record<TxType, string> = {
+const TYPE_ICON = {
   seal: '🔒',
   verify: '✅',
   alert: '⚠️',
@@ -30,14 +17,14 @@ const TYPE_ICON: Record<TxType, string> = {
 };
 
 export default function BlockchainLog() {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [transactions, setTransactions] = useState<Transaction[]>([]); // MongoDB + Blockchain se aayega
-  const [filter, setFilter] = useState<TxFilter>('all');
-  const [expanded, setExpanded] = useState<string | null>(null);
+  // eslint-disable-next-line no-unused-vars
+  const [transactions, setTransactions] = useState([]);
+  const [filter, setFilter] = useState('all');
+  const [expanded, setExpanded] = useState(null);
 
   const filtered = transactions.filter(tx => filter === 'all' || tx.type === filter);
 
-  const count = (t: TxType) => transactions.filter(tx => tx.type === t).length;
+  const count = (t) => transactions.filter(tx => tx.type === t).length;
 
   const stats = [
     { label: 'Total TXs', value: transactions.length.toString(), sub: 'On Sepolia', color: 'var(--accent)', cls: 'blue' },
@@ -85,7 +72,7 @@ export default function BlockchainLog() {
         <div className="section-header">
           <span className="section-title">Transaction History</span>
           <div className="tx-filter-tabs">
-            {(['all', 'seal', 'verify', 'alert', 'revoke'] as TxFilter[]).map(f => (
+            {['all', 'seal', 'verify', 'alert', 'revoke'].map(f => (
               <button
                 key={f}
                 className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'} sm`}

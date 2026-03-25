@@ -1,15 +1,13 @@
 import { useState, useRef } from "react";
+import '../styles/Verify.css';
 
-interface VerifyProps {
-  onNotify: (msg: string, type: string) => void;
-}
 
-export default function Verify({ onNotify }: VerifyProps) {
-  const [verifyFile, setVerifyFile] = useState<File | null>(null);
+export default function Verify({ onNotify }) {
+  const [verifyFile, setVerifyFile] = useState(null);
   const [verifying, setVerifying] = useState(false);
-  const [verifyResult, setVerifyResult] = useState<null | "valid" | "tampered">(null);
+  const [verifyResult, setVerifyResult] = useState(null);
   const [verifyStep, setVerifyStep] = useState(0);
-  const verifyInputRef = useRef<HTMLInputElement>(null);
+  const verifyInputRef = useRef(null);
 
   const BLOCKCHAIN_HASH = "a7f3c2d9e4b1f8a2c5d6e3f0a1b4c7d8e9f2a5b8c1d4e7f0a3b6c9d2e5f8a1b4";
   const TAMPERED_HASH  = "DEADBEEF00000000111111112222222233333333444444445555555566666666abcd";
