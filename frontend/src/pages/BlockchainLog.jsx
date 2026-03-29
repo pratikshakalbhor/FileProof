@@ -1,157 +1,181 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import '../styles/BlockchainLog.css';
+import { pageVariants, cardVariants, staggerContainer, fadeIn } from '../utils/animations';
+import { getStatsFromBlockchain, getFileFromBlockchain, getTxUrl } from '../utils/blockchain';
 
+export default function BlockchainLog({ walletAddress }) {
+  const [blockchainStats, setBlockchainStats] = useState(null);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState('');
+  const [fileIdInput,     setFileIdInput]      = useState('');
+  const [fileData,        setFileData]         = useState(null);
+  const [fetching,        setFetching]         = useState(false);
 
-const TYPE_COLOR = {
-  seal: 'var(--accent)',
-  verify: 'var(--green)',
-  alert: 'var(--red)',
-  revoke: 'var(--yellow)',
-};
+  useEffect(() => {
+    fetchBlockchainStats();
+  }, []);
 
-const TYPE_ICON = {
-  seal: '🔒',
-  verify: '✅',
-  alert: '⚠️',
-  revoke: '🚫',
-};
+  const fetchBlockchainStats = async () => {
+    setLoading(true); setError('');
+    try {
+      const stats = await getStatsFromBlockchain();
+      setBlockchainStats(stats);
+    } catch (err) {
+      setError('Blockchain connect error: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export default function BlockchainLog() {
-  // eslint-disable-next-line no-unused-vars
-  const [transactions, setTransactions] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [expanded, setExpanded] = useState(null);
-
-  const filtered = transactions.filter(tx => filter === 'all' || tx.type === filter);
-
-  const count = (t) => transactions.filter(tx => tx.type === t).length;
+  const fetchFileFromChain = async () => {
+    if (!fileIdInput.trim()) return;
+    setFetching(true); setFileData(null);
+    try {
+      const data = await getFileFromBlockchain(fileIdInput.trim());
+      setFileData(data);
+    } catch (err) {
+      alert('Error: ' + err.message);
+    } finally {
+      setFetching(false);
+    }
+  };
 
   const stats = [
-    { label: 'Total TXs', value: transactions.length.toString(), sub: 'On Sepolia', color: 'var(--accent)', cls: 'blue' },
-    { label: 'Seals', value: count('seal').toString(), sub: 'sealBackup() calls', color: 'var(--green)', cls: 'green' },
-    { label: 'Verifications', value: count('verify').toString(), sub: 'verifyBackup() calls', color: '#a78bfa', cls: 'purple' },
-    { label: 'Tamper Alerts', value: count('alert').toString(), sub: 'Detected events', color: 'var(--red)', cls: 'red' },
+    { label: 'Total Files Sealed', value: blockchainStats?.totalFiles ?? '—',          sub: 'On Sepolia',           color: 'var(--accent)', cls: 'blue'   },
+    { label: 'Total Verifications',value: blockchainStats?.totalVerifications ?? '—',  sub: 'verifyFile() calls',   color: 'var(--green)',  cls: 'green'  },
+    { label: 'Tamper Detected',     value: blockchainStats?.totalTampered ?? '—',       sub: 'Hash mismatches',      color: 'var(--red)',    cls: 'red'    },
+    { label: 'Total Revoked',       value: blockchainStats?.totalRevoked ?? '—',        sub: 'revokeFile() calls',   color: '#a78bfa',       cls: 'purple' },
   ];
 
   return (
-    <div className="page-container">
+    <motion.div className="page-container" variants={pageVariants} initial="initial" animate="animate">
 
-      {/* Stats */}
-      <div className="stats-grid">
+      {/* Stats from Blockchain */}
+      <motion.div className="stats-grid" variants={staggerContainer} initial="initial" animate="animate">
         {stats.map((s, i) => (
-          <div key={i} className={`stat-card ${s.cls}`}>
+          <motion.div key={i} className={`stat-card ${s.cls}`} variants={cardVariants}
+            whileHover={{ y: -4 }}>
             <div className="stat-label">{s.label}</div>
-            <div className="stat-value" style={{ color: s.color }}>{s.value}</div>
+            <div className="stat-value" style={{ color: s.color }}>
+              {loading ? '...' : s.value}
+            </div>
             <div className="stat-sub">{s.sub}</div>
-          </div>
+          </motion.div>
         ))}
-      </div>
+      </motion.div>
+
+      {/* Error */}
+      {error && (
+        <motion.div variants={fadeIn} initial="initial" animate="animate"
+          style={{ background: 'rgba(255,59,92,0.08)', border: '1px solid rgba(255,59,92,0.25)', borderRadius: 10, padding: '14px 18px', fontSize: 12, color: 'var(--red)', fontFamily: 'var(--font-mono)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          ⚠️ {error}
+          <button className="btn btn-outline sm" onClick={fetchBlockchainStats}>Retry</button>
+        </motion.div>
+      )}
 
       {/* Contract Info */}
-      <div className="section-card">
+      <motion.div className="section-card" variants={cardVariants} initial="initial" animate="animate">
         <div className="section-header">
           <span className="section-title">Smart Contract Info</span>
           <span className="section-badge">Ethereum Sepolia</span>
         </div>
         <div className="contract-info-grid">
           {[
-            { label: 'Contract Address', value: 'Deploy ' },
-            { label: 'Network', value: 'Ethereum Sepolia Testnet' },
-            { label: 'Compiler', value: 'Solidity 0.8.19' },
+            { label: 'Contract Address', value: process.env.REACT_APP_CONTRACT_ADDRESS || 'Not set in .env' },
+            { label: 'Network',          value: 'Ethereum Sepolia Testnet' },
+            { label: 'Compiler',         value: 'Solidity ^0.8.19' },
           ].map((item, i) => (
             <div key={i} className="contract-info-item">
               <div className="contract-info-label">{item.label}</div>
-              <div className="contract-info-value">{item.value}</div>
+              <div className="contract-info-value">
+                {i === 0 ? (
+                  <a href={`https://sepolia.etherscan.io/address/${item.value}`}
+                    target="_blank" rel="noreferrer"
+                    style={{ color: 'var(--accent)', textDecoration: 'none' }}>
+                    {item.value} ↗
+                  </a>
+                ) : item.value}
+              </div>
             </div>
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* TX Log */}
-      <div className="section-card">
+      {/* Fetch File from Blockchain */}
+      <motion.div className="section-card" variants={cardVariants} initial="initial" animate="animate">
         <div className="section-header">
-          <span className="section-title">Transaction History</span>
-          <div className="tx-filter-tabs">
-            {['all', 'seal', 'verify', 'alert', 'revoke'].map(f => (
-              <button
-                key={f}
-                className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'} sm`}
-                onClick={() => setFilter(f)}
-                style={{ fontSize: 11, textTransform: 'uppercase' }}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
+          <span className="section-title">🔍 Lookup File on Blockchain</span>
+        </div>
+        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+          <input
+            type="text"
+            placeholder="Enter File ID (e.g. FILE-ABC123...)"
+            value={fileIdInput}
+            onChange={e => setFileIdInput(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && fetchFileFromChain()}
+            style={{ flex: 1, padding: '10px 14px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontFamily: 'var(--font-mono)', fontSize: 13 }}
+          />
+          <motion.button className="btn btn-primary" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={fetchFileFromChain} disabled={fetching}>
+            {fetching ? '⏳ Fetching...' : '🔍 Lookup'}
+          </motion.button>
         </div>
 
-        {transactions.length === 0 ? (
-          <div className="empty-state">
-            <div style={{ fontSize: 40, marginBottom: 12 }}>⛓️</div>
-            <div style={{ fontWeight: 700, marginBottom: 6 }}>No transactions yet</div>
-            <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-              Upload a file to create your first blockchain transaction
+        {/* File Result from Blockchain */}
+        {fileData && (
+          <motion.div variants={fadeIn} initial="initial" animate="animate"
+            style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 10, padding: 16 }}>
+            <div style={{ fontWeight: 700, marginBottom: 12, color: 'var(--accent)' }}>
+              ✅ File Found on Blockchain
             </div>
-          </div>
-        ) : (
-          <div className="tx-list">
-            {filtered.map(tx => (
-              <div key={tx._id}>
-                <div
-                  className="tx-item"
-                  style={{
-                    cursor: 'pointer',
-                    borderColor: expanded === tx._id ? TYPE_COLOR[tx.type] : 'var(--border)',
-                    borderRadius: expanded === tx._id ? '10px 10px 0 0' : '10px',
-                  }}
-                  onClick={() => setExpanded(expanded === tx._id ? null : tx._id)}
-                >
-                  <div style={{
-                    width: 38, height: 38, borderRadius: 8, flexShrink: 0,
-                    background: `${TYPE_COLOR[tx.type]}18`,
-                    border: `1px solid ${TYPE_COLOR[tx.type]}33`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16,
-                  }}>
-                    {TYPE_ICON[tx.type]}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{tx.action}</div>
-                    <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>
-                      {tx.file} · Block #{tx.block} · {tx.time}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--accent)', marginBottom: 2 }}>
-                      {tx.hash} ↗
-                    </div>
-                    <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--muted)' }}>
-                      Gas: {tx.gas}
-                    </div>
-                  </div>
-                  <span className="status-badge status-valid" style={{ marginLeft: 8 }}>● CONFIRMED</span>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              {[
+                { label: 'File ID',    value: fileData.fileId   },
+                { label: 'Filename',   value: fileData.filename  },
+                { label: 'Hash',       value: fileData.fileHash  },
+                { label: 'Owner',      value: fileData.owner     },
+                { label: 'Timestamp',  value: fileData.timestamp },
+                { label: 'Revoked',    value: fileData.isRevoked ? '⚠️ Yes' : '✅ No' },
+              ].map((item, i) => (
+                <div key={i} style={{ background: 'var(--surface)', borderRadius: 6, padding: 10 }}>
+                  <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', color: 'var(--muted)', letterSpacing: 1.2, textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
+                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', color: 'var(--text)', wordBreak: 'break-all' }}>{item.value}</div>
                 </div>
-
-                {expanded === tx._id && (
-                  <div className="tx-expanded">
-                    {[
-                      { label: 'Block Number', value: `#${tx.block}` },
-                      { label: 'Gas Used', value: tx.gas },
-                      { label: 'Network', value: 'Sepolia Testnet' },
-                      { label: 'Function', value: tx.action },
-                    ].map((item, i) => (
-                      <div key={i}>
-                        <div className="tx-expanded-label">{item.label}</div>
-                        <div className="tx-expanded-value">{item.value}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
 
-    </div>
+      {/* Functions Reference */}
+      <motion.div className="section-card" variants={cardVariants} initial="initial" animate="animate">
+        <div className="section-title" style={{ marginBottom: 16 }}>Contract Functions</div>
+        <div className="tx-list">
+          {[
+            { icon: '🔒', fn: 'sealFile()',    desc: 'File hash permanently store karto',   type: 'write', color: 'var(--accent)'  },
+            { icon: '✅', fn: 'verifyFile()',  desc: 'Hash compare + tamper detect karto',  type: 'write', color: 'var(--green)'   },
+            { icon: '👁️', fn: 'quickVerify()', desc: 'Read-only hash comparison (no gas)',  type: 'read',  color: 'var(--yellow)'  },
+            { icon: '🚫', fn: 'revokeFile()',  desc: 'File record revoke karto',            type: 'write', color: 'var(--red)'     },
+            { icon: '📊', fn: 'getStats()',    desc: 'Total files, verifications, tampered', type: 'read',  color: '#a78bfa'        },
+            { icon: '📄', fn: 'getFile()',     desc: 'Single file record fetch karto',      type: 'read',  color: 'var(--accent)'  },
+          ].map((item, i) => (
+            <motion.div key={i} className="tx-item" whileHover={{ borderColor: item.color }}>
+              <div style={{ width: 36, height: 36, borderRadius: 8, background: `${item.color}18`, border: `1px solid ${item.color}33`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>
+                {item.icon}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontWeight: 700, fontSize: 13, fontFamily: 'var(--font-mono)', color: item.color }}>{item.fn}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted)' }}>{item.desc}</div>
+              </div>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', padding: '3px 8px', borderRadius: 20, background: item.type === 'read' ? 'rgba(0,255,157,0.1)' : 'rgba(0,212,255,0.1)', color: item.type === 'read' ? 'var(--green)' : 'var(--accent)', border: `1px solid ${item.type === 'read' ? 'rgba(0,255,157,0.2)' : 'rgba(0,212,255,0.2)'}` }}>
+                {item.type.toUpperCase()}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </motion.div>
+
+    </motion.div>
   );
 }
