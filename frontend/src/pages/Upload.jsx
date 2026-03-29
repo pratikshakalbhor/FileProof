@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Upload.css';
 import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../utils/animations';
 import { uploadFile } from '../utils/api';
+import { sealFileOnBlockchain } from '../utils/blockchain';
+import TxStatus from '../components/TxStatus';
 
 const STEPS = [
-  { label: 'Read',    desc: 'File read'   },
-  { label: 'Hash',    desc: 'SHA-256'     },
-  { label: 'Upload',  desc: 'Go Backend'  },
-  { label: 'Save',    desc: 'MongoDB'     },
-  { label: 'Done',    desc: 'Complete!'   },
+  { label: 'Read',      desc: 'File read'      },
+  { label: 'Hash',      desc: 'SHA-256'         },
+  { label: 'Backend',   desc: 'Go API'          },
+  { label: 'MongoDB',   desc: 'Save DB'         },
+  { label: 'Blockchain',desc: 'Seal on ETH'     },
+  { label: 'Done',      desc: 'Complete!'       },
 ];
 
 const LAYERS = [
@@ -19,19 +22,21 @@ const LAYERS = [
 ];
 
 export default function Upload({ onNotify, walletAddress }) {
-  const [dragging,      setDragging]      = useState(false);
-  const [selectedFile,  setSelectedFile]  = useState(null);
-  const [uploading,     setUploading]     = useState(false);
-  const [uploadStep,    setUploadStep]    = useState(0);
-  const [uploadProgress,setUploadProgress]= useState(0);
-  const [result,        setResult]        = useState(null);
-  const [error,         setError]         = useState('');
+  const [dragging,       setDragging]       = useState(false);
+  const [selectedFile,   setSelectedFile]   = useState(null);
+  const [uploading,      setUploading]      = useState(false);
+  const [uploadStep,     setUploadStep]     = useState(0);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [result,         setResult]         = useState(null);
+  const [txInfo,         setTxInfo]         = useState(null);
+  const [txStatus,       setTxStatus]       = useState('');
+  const [error,          setError]          = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
     if (e.target.files?.[0]) {
       setSelectedFile(e.target.files[0]);
-      setResult(null); setError('');
+      setResult(null); setError(''); setTxInfo(null);
     }
   };
 
@@ -42,44 +47,66 @@ export default function Upload({ onNotify, walletAddress }) {
 
   const handleUpload = async () => {
     if (!selectedFile || !walletAddress) return;
-    setUploading(true); setError(''); setResult(null);
+    setUploading(true); setError('');
+    setResult(null); setTxInfo(null);
 
     try {
-      // Step 1
-      setUploadStep(1); setUploadProgress(15);
-      await delay(400);
-
-      // Step 2
-      setUploadStep(2); setUploadProgress(35);
-      await delay(400);
-
-      // Step 3 — Real Go Backend API Call
-      setUploadStep(3); setUploadProgress(60);
-      const data = await uploadFile(selectedFile, walletAddress);
-
-      // Step 4
-      setUploadStep(4); setUploadProgress(85);
-      await delay(400);
-
-      // Step 5
-      setUploadStep(5); setUploadProgress(100);
+      // ── Step 1: File read ──
+      setUploadStep(1); setUploadProgress(10);
       await delay(300);
 
-      setResult(data);
+      // ── Step 2: Hash (Go backend karto) ──
+      setUploadStep(2); setUploadProgress(25);
+      await delay(300);
+
+      // ── Step 3: Go Backend API call ──
+      setUploadStep(3); setUploadProgress(45);
+      const apiResult = await uploadFile(selectedFile, walletAddress);
+
+      // ── Step 4: MongoDB save ──
+      setUploadStep(4); setUploadProgress(65);
+      await delay(300);
+
+      // ── Step 5: Blockchain Seal ──
+      setUploadStep(5); setUploadProgress(80);
+      setTxStatus('pending');
+
+      const blockchainResult = await sealFileOnBlockchain({
+        fileId:   apiResult.fileId,
+        filename: apiResult.filename,
+        fileHash: apiResult.fileHash,
+        fileSize: apiResult.fileSize,
+        cloudUrl: '',
+      });
+
+      setTxInfo(blockchainResult);
+      setTxStatus('success');
+
+      // ── Step 6: Done ──
+      setUploadStep(6); setUploadProgress(100);
+      await delay(300);
+
+      setResult({ ...apiResult, txHash: blockchainResult.txHash });
       setUploading(false);
-      onNotify('✅ File uploaded and sealed successfully!', 'success');
+      onNotify('✅ File uploaded and sealed on blockchain!', 'success');
 
     } catch (err) {
-      setError(err.message);
+      // Blockchain fail zali tari backend result save hoto
+      if (err.message?.includes('blockchain') || err.message?.includes('MetaMask') || err.message?.includes('Transaction')) {
+        setTxStatus('failed');
+        setError('⚠️ Backend save zala, pan blockchain seal failed: ' + err.message);
+      } else {
+        setError(err.message);
+      }
       setUploading(false);
       setUploadStep(0); setUploadProgress(0);
-      onNotify('❌ Upload failed: ' + err.message, 'error');
+      onNotify('❌ ' + err.message, 'error');
     }
   };
 
   const reset = () => {
-    setSelectedFile(null); setUploadStep(0);
-    setUploadProgress(0); setResult(null); setError('');
+    setSelectedFile(null); setUploadStep(0); setUploadProgress(0);
+    setResult(null); setError(''); setTxInfo(null); setTxStatus('');
   };
 
   const formatSize = (b) => {
@@ -92,11 +119,10 @@ export default function Upload({ onNotify, walletAddress }) {
   return (
     <motion.div className="page-container" variants={pageVariants} initial="initial" animate="animate">
 
-      {/* Upload Card */}
       <motion.div className="section-card" variants={cardVariants} initial="initial" animate="animate">
         <div className="section-header">
           <span className="section-title">Upload & Seal File</span>
-          <span className="section-badge">SHA-256 + MongoDB + Blockchain</span>
+          <span className="section-badge">SHA-256 + MongoDB + Ethereum</span>
         </div>
 
         <AnimatePresence mode="wait">
@@ -116,7 +142,7 @@ export default function Upload({ onNotify, walletAddress }) {
                 <motion.span className="drop-icon"
                   animate={{ y: [0, -6, 0] }} transition={{ duration: 2, repeat: Infinity }}>📂</motion.span>
                 <div className="drop-title">Drop file here or click to browse</div>
-                <div className="drop-sub">Any file type · Max 100MB · SHA-256 hash generated automatically</div>
+                <div className="drop-sub">Any file type · Max 100MB · Sealed on Ethereum Sepolia</div>
               </motion.div>
             </motion.div>
           )}
@@ -125,9 +151,13 @@ export default function Upload({ onNotify, walletAddress }) {
           {selectedFile && !uploading && !result && (
             <motion.div key="selected" variants={cardVariants} initial="initial" animate="animate">
               {error && (
-                <div style={{ background: 'rgba(255,59,92,0.08)', border: '1px solid rgba(255,59,92,0.25)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 12, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>
-                  ⚠️ {error}
-                </div>
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                  style={{ background: 'rgba(255,59,92,0.08)', border: '1px solid rgba(255,59,92,0.25)', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 12, color: 'var(--red)', fontFamily: 'var(--font-mono)' }}>
+                  {error}
+                </motion.div>
+              )}
+              {txStatus === 'failed' && txInfo === null && (
+                <TxStatus txHash={null} status="failed" />
               )}
               <div className="file-selected">
                 <motion.div className="file-icon-box" whileHover={{ rotate: 5 }}>📄</motion.div>
@@ -139,7 +169,7 @@ export default function Upload({ onNotify, walletAddress }) {
                 <motion.button className="btn btn-primary"
                   whileHover={{ scale: 1.04, boxShadow: '0 8px 24px rgba(0,212,255,0.3)' }}
                   whileTap={{ scale: 0.97 }} onClick={handleUpload}>
-                  🔒 Upload & Seal
+                  🔒 Upload & Seal on Blockchain
                 </motion.button>
               </div>
             </motion.div>
@@ -170,51 +200,53 @@ export default function Upload({ onNotify, walletAddress }) {
               <motion.div className="progress-text" key={uploadStep} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}>
                 {uploadStep === 1 && '📖 Reading file...'}
                 {uploadStep === 2 && '📝 Generating SHA-256 hash...'}
-                {uploadStep === 3 && '☁️ Uploading to Go backend + MongoDB...'}
-                {uploadStep === 4 && '💾 Saving to database...'}
-                {uploadStep === 5 && '✅ File sealed successfully!'}
+                {uploadStep === 3 && '☁️ Uploading to Go backend...'}
+                {uploadStep === 4 && '💾 Saving to MongoDB...'}
+                {uploadStep === 5 && '⛓️ Sealing on Ethereum blockchain... (Check MetaMask!)'}
+                {uploadStep === 6 && '✅ File sealed on blockchain!'}
               </motion.div>
             </motion.div>
           )}
 
-          {/* Success Result */}
+          {/* Success */}
           {result && !uploading && (
             <motion.div key="success" variants={cardVariants} initial="initial" animate="animate" className="upload-result">
-              <motion.div className="result-success-header"
-                initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <motion.span style={{ fontSize: 32 }}
-                  initial={{ scale: 0 }} animate={{ scale: 1 }}
-                  transition={{ type: 'spring', stiffness: 300 }}>✅</motion.span>
+              <motion.div className="result-success-header" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                <motion.span style={{ fontSize: 32 }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>✅</motion.span>
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 18, color: 'var(--green)' }}>File Sealed Successfully!</div>
+                  <div style={{ fontWeight: 800, fontSize: 18, color: 'var(--green)' }}>File Sealed on Blockchain!</div>
                   <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{result.filename}</div>
                 </div>
               </motion.div>
 
               <div className="result-details">
                 {[
-                  { label: 'File ID',        value: result.fileId,   color: 'var(--accent)' },
-                  { label: 'SHA-256 Hash',   value: result.fileHash, color: 'var(--text)'   },
-                  { label: 'TX Hash (Mock)', value: result.txHash,   color: 'var(--accent)' },
-                  { label: 'File Size',      value: formatSize(result.fileSize), color: 'var(--text)' },
+                  { label: 'File ID',      value: result.fileId },
+                  { label: 'SHA-256 Hash', value: result.fileHash },
+                  { label: 'File Size',    value: formatSize(result.fileSize) },
                 ].map((item, i) => (
                   <motion.div key={i} className="result-item"
                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.08 }}>
                     <div className="result-label">{item.label}</div>
-                    <div className="result-value" style={{ color: item.color }}>{item.value}</div>
+                    <div className="result-value">{item.value}</div>
                   </motion.div>
                 ))}
               </div>
 
-              <div style={{ display: 'flex', gap: 12 }}>
-                <motion.button className="btn btn-outline" whileHover={{ scale: 1.02 }} onClick={reset}>
-                  Upload Another File
-                </motion.button>
-                <motion.button className="btn btn-primary" whileHover={{ scale: 1.02 }}>
-                  ⛓ Seal on Blockchain →
-                </motion.button>
-              </div>
+              {/* TX Status */}
+              {txInfo && (
+                <TxStatus
+                  txHash={txInfo.txHash}
+                  status="success"
+                  blockNumber={txInfo.blockNumber}
+                  gasUsed={txInfo.gasUsed}
+                />
+              )}
+
+              <motion.button className="btn btn-outline" style={{ marginTop: 16 }} whileHover={{ scale: 1.02 }} onClick={reset}>
+                Upload Another File
+              </motion.button>
             </motion.div>
           )}
 
@@ -228,8 +260,7 @@ export default function Upload({ onNotify, walletAddress }) {
           {LAYERS.map((item, i) => (
             <motion.div key={i} className="layer-card" style={{ borderTopColor: item.color }}
               variants={cardVariants} whileHover={{ y: -4, boxShadow: `0 12px 28px ${item.color}22` }}>
-              <motion.div style={{ fontSize: 32, marginBottom: 12 }}
-                whileHover={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 0.4 }}>{item.icon}</motion.div>
+              <motion.div style={{ fontSize: 32, marginBottom: 12 }} whileHover={{ rotate: [0, -10, 10, 0] }} transition={{ duration: 0.4 }}>{item.icon}</motion.div>
               <div style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: item.color, letterSpacing: 1.5, marginBottom: 6, textTransform: 'uppercase' }}>{item.layer}</div>
               <div style={{ fontWeight: 700, marginBottom: 8, fontSize: 14 }}>{item.title}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', lineHeight: 1.7 }}>{item.desc}</div>
