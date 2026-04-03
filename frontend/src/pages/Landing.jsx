@@ -3,16 +3,16 @@ import '../styles/Landing.css';
 
 export default function Landing({ onGetStarted }) {
   const features = [
-    { icon: '🔐', title: 'AES-256 Encryption', desc: 'File upload karayla aadhi AES-256 ne encrypt hoti. Sirf tumhiच decrypt karu shaktat.' },
-    { icon: '📝', title: 'SHA-256 Hashing',    desc: 'Pratyek file chi unique digital fingerprint. 1 byte change = completely different hash.' },
-    { icon: '⛓️', title: 'Blockchain Seal',    desc: 'Hash Ethereum blockchain var permanently store. Koni change karu shakat nahi.' },
-    { icon: '✅', title: 'Integrity Verify',   desc: 'Same file re-upload kara — VALID ya TAMPERED result lageech milel.' },
+    { icon: '🔐', title: 'AES-256 Encryption', desc: 'Every file is encrypted with AES-256 on upload. Only you can decrypt it.' },
+    { icon: '📝', title: 'SHA-256 Hashing',    desc: 'A unique digital fingerprint for every file. Change 1 byte — get a completely different hash.' },
+    { icon: '⛓️', title: 'Blockchain Seal',    desc: 'The hash is permanently stored on the Ethereum blockchain. No one can alter it.' },
+    { icon: '✅', title: 'Integrity Verify',   desc: 'Re-upload the same file — instantly get a VALID or TAMPERED result.' },
   ];
 
   const useCases = [
-    { icon: '🏥', title: 'Hospitals',  desc: 'Patient records tamper-proof rahil' },
-    { icon: '🏦', title: 'Banks',      desc: 'Financial documents secure rahil' },
-    { icon: '🎓', title: 'Colleges',   desc: 'Certificates verify karta yetil' },
+    { icon: '🏥', title: 'Hospitals',  desc: 'Patient records stay tamper-proof' },
+    { icon: '🏦', title: 'Banks',      desc: 'Financial documents remain secure' },
+    { icon: '🎓', title: 'Colleges',   desc: 'Certificates can be verified anytime' },
     { icon: '🏢', title: 'Companies',  desc: 'Employee data integrity guaranteed' },
   ];
 
@@ -41,14 +41,13 @@ export default function Landing({ onGetStarted }) {
             ⛓️ Powered by Ethereum Blockchain
           </motion.div>
           <h1 className="hero-title">
-            Cloud Files ला<br />
-            <span className="hero-accent">Blockchain Security</span><br />
-            द्या
+            Give Your Cloud Files<br />
+            <span className="hero-accent">Blockchain Security</span>
           </h1>
           <p className="hero-desc">
-            तुमच्या महत्त्वाच्या files AES-256 ने encrypt करा, SHA-256 hash generate करा
-            आणि Ethereum blockchain वर permanently seal करा.
-            कोणीही file tamper केली तर लगेच detect होईल.
+            Encrypt your important files with AES-256, generate a SHA-256 hash,
+            and permanently seal them on the Ethereum blockchain.
+            Any tampering is detected instantly.
           </p>
           <div className="hero-actions">
             <motion.button className="btn btn-primary btn-lg" onClick={onGetStarted}
@@ -130,12 +129,12 @@ export default function Landing({ onGetStarted }) {
       <motion.section className="landing-section problem-section"
         initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
         <div className="section-label">Real Problem</div>
-        <h2 className="section-title-lg">हे Problem खरे आहेत</h2>
+        <h2 className="section-title-lg">These Problems Are Real</h2>
         <div className="problem-box">
           {[
-            { icon:'🦠', title:'Silent Data Corruption', desc:'Server वर वर्षानुवर्षे पडून राहिलेला data corrupt होतो — पण कळत नाही.' },
-            { icon:'👤', title:'Insider Threats',         desc:'Cloud provider चा कर्मचारी database मध्ये जाऊन data बदलू शकतो.' },
-            { icon:'⚕️', title:'AIIMS Delhi 2023',        desc:'40 million patient records hack. Blood reports बदलले असते तर जीव गेले असते.' },
+            { icon:'🦠', title:'Silent Data Corruption', desc:'Data sitting on servers for years gets corrupted silently — and no one notices.' },
+            { icon:'👤', title:'Insider Threats',         desc:'A cloud provider employee can access the database and alter data without a trace.' },
+            { icon:'⚕️', title:'AIIMS Delhi 2023',        desc:'40 million patient records hacked. Altered blood reports could have cost lives.' },
           ].map((p,i) => (
             <motion.div key={i} className="problem-item"
               initial={{ opacity:0, x:-20 }} whileInView={{ opacity:1, x:0 }}
@@ -149,7 +148,7 @@ export default function Landing({ onGetStarted }) {
           ))}
         </div>
         <div className="solution-tag">
-          💡 CryptoVault Solution: <strong>"Trust but Verify"</strong> — Cloud वर विश्वास ठेवा, पण Blockchain ने दरवेळी तपासा.
+          💡 CryptoVault Solution: <strong>"Trust but Verify"</strong> 
         </div>
       </motion.section>
 
@@ -157,7 +156,7 @@ export default function Landing({ onGetStarted }) {
       <motion.section className="landing-section"
         initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
         <div className="section-label">Use Cases</div>
-        <h2 className="section-title-lg">कोण वापरू शकतो?</h2>
+        <h2 className="section-title-lg">Who Can Use This?</h2>
         <div className="usecase-grid">
           {useCases.map((u,i) => (
             <motion.div key={i} className="usecase-card"
@@ -175,8 +174,8 @@ export default function Landing({ onGetStarted }) {
       {/* CTA */}
       <motion.section className="landing-cta"
         initial={{ opacity:0, y:30 }} whileInView={{ opacity:1, y:0 }} viewport={{ once:true }}>
-        <h2 className="cta-title">आत्ताच सुरु करा</h2>
-        <p className="cta-desc">MetaMask wallet connect करा आणि तुमच्या files ला blockchain security द्या</p>
+        <h2 className="cta-title">Get Started Now</h2>
+        <p className="cta-desc">Connect your MetaMask wallet and give your files blockchain-grade security</p>
         <motion.button className="btn btn-primary btn-lg" onClick={onGetStarted}
           whileHover={{ scale:1.06, boxShadow:'0 16px 40px rgba(0,212,255,0.4)' }} whileTap={{ scale:0.97 }}>
           🦊 Connect Wallet — Start Free

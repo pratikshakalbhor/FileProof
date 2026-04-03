@@ -39,7 +39,7 @@
 .section-label { font-size:11px; font-family:var(--font-mono); color:var(--accent); letter-spacing:2px; text-transform:uppercase; margin-bottom:12px; }
 .section-title-lg { font-size:36px; font-weight:800; letter-spacing:-1px; color:white; margin-bottom:40px; }
 
-/* Features */
+/* Features add*/
 .features-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
 .feature-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:24px; transition:all 0.2s; }
 .feature-icon  { font-size:32px; margin-bottom:14px; }
@@ -70,6 +70,7 @@
 
 /* Footer */
 .landing-footer { display:flex; align-items:center; justify-content:space-between; padding:24px 60px; border-top:1px solid var(--border); background:var(--surface); }
+
 
 /* Mobile */
 @media (max-width:768px) {
