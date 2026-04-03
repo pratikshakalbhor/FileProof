@@ -1,5 +1,18 @@
 [
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_uploader",
+				"type": "address"
+			}
+		],
+		"name": "addUploader",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
@@ -98,6 +111,75 @@
 		"type": "event"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_uploader",
+				"type": "address"
+			}
+		],
+		"name": "removeUploader",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_fileId",
+				"type": "string"
+			}
+		],
+		"name": "revokeFile",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_fileId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_filename",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_fileHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_encryptedHash",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_mongoDbRef",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_cloudinaryUrl",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_fileSize",
+				"type": "uint256"
+			}
+		],
+		"name": "sealFile",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"anonymous": false,
 		"inputs": [
 			{
@@ -131,13 +213,24 @@
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "_uploader",
-				"type": "address"
+				"internalType": "string",
+				"name": "_fileId",
+				"type": "string"
+			},
+			{
+				"internalType": "string",
+				"name": "_currentHash",
+				"type": "string"
 			}
 		],
-		"name": "addUploader",
-		"outputs": [],
+		"name": "verifyFile",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "isMatch",
+				"type": "bool"
+			}
+		],
 		"stateMutability": "nonpayable",
 		"type": "function"
 	},
@@ -353,75 +446,6 @@
 		"type": "function"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "_uploader",
-				"type": "address"
-			}
-		],
-		"name": "removeUploader",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_fileId",
-				"type": "string"
-			}
-		],
-		"name": "revokeFile",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_fileId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_filename",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_fileHash",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_encryptedHash",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_mongoDbRef",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_cloudinaryUrl",
-				"type": "string"
-			},
-			{
-				"internalType": "uint256",
-				"name": "_fileSize",
-				"type": "uint256"
-			}
-		],
-		"name": "sealFile",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"inputs": [],
 		"name": "totalFiles",
 		"outputs": [
@@ -471,30 +495,6 @@
 			}
 		],
 		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "_fileId",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "_currentHash",
-				"type": "string"
-			}
-		],
-		"name": "verifyFile",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "isMatch",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ]

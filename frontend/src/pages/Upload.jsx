@@ -7,42 +7,42 @@ import { sealFileOnBlockchain } from '../utils/blockchain';
 import TxStatus from '../components/TxStatus';
 
 const STEPS = [
-  { label: 'Read',      desc: 'File read'      },
-  { label: 'Hash',      desc: 'SHA-256'         },
-  { label: 'Backend',   desc: 'Go API'          },
-  { label: 'MongoDB',   desc: 'Save DB'         },
-  { label: 'Blockchain',desc: 'Seal on ETH'     },
-  { label: 'Done',      desc: 'Complete!'       },
+  { label: 'Read', desc: 'File read' },
+  { label: 'Hash', desc: 'SHA-256' },
+  { label: 'Backend', desc: 'Go API' },
+  { label: 'MongoDB', desc: 'Save DB' },
+  { label: 'Blockchain', desc: 'Seal on ETH' },
+  { label: 'Done', desc: 'Complete!' },
 ];
 
 const LAYERS = [
   {
-    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>,
-    layer: 'Layer 1', title: 'AES-256 Encryption',  color: 'var(--accent)',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>,
+    layer: 'Layer 1', title: 'AES-256 Encryption', color: 'var(--accent)',
     desc: 'File encrypted before upload. Only you can decrypt with your private key.'
   },
   {
-    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>,
-    layer: 'Layer 2', title: 'SHA-256 Hashing',     color: 'var(--yellow)',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>,
+    layer: 'Layer 2', title: 'SHA-256 Hashing', color: 'var(--yellow)',
     desc: 'Unique digital fingerprint. Even 1 byte change = completely different hash.'
   },
   {
-    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="6" height="6" rx="1"/><rect x="9" y="7" width="6" height="6" rx="1"/><rect x="16" y="7" width="6" height="6" rx="1"/><line x1="8" y1="10" x2="9" y2="10"/><line x1="15" y1="10" x2="16" y2="10"/></svg>,
-    layer: 'Layer 3', title: 'Blockchain Seal',     color: 'var(--green)',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="6" height="6" rx="1" /><rect x="9" y="7" width="6" height="6" rx="1" /><rect x="16" y="7" width="6" height="6" rx="1" /><line x1="8" y1="10" x2="9" y2="10" /><line x1="15" y1="10" x2="16" y2="10" /></svg>,
+    layer: 'Layer 3', title: 'Blockchain Seal', color: 'var(--green)',
     desc: 'Hash stored permanently on Ethereum. Immutable and tamper-proof forever.'
   },
 ];
 
 export default function Upload({ onNotify, walletAddress }) {
-  const [dragging,       setDragging]       = useState(false);
-  const [selectedFile,   setSelectedFile]   = useState(null);
-  const [uploading,      setUploading]      = useState(false);
-  const [uploadStep,     setUploadStep]     = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadStep, setUploadStep] = useState(0);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [result,         setResult]         = useState(null);
-  const [txInfo,         setTxInfo]         = useState(null);
-  const [txStatus,       setTxStatus]       = useState('');
-  const [error,          setError]          = useState('');
+  const [result, setResult] = useState(null);
+  const [txInfo, setTxInfo] = useState(null);
+  const [txStatus, setTxStatus] = useState('');
+  const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
@@ -83,33 +83,36 @@ export default function Upload({ onNotify, walletAddress }) {
       setUploadStep(5); setUploadProgress(80);
       setTxStatus('pending');
 
-      const blockchainResult = await sealFileOnBlockchain({
-        fileId:   apiResult.fileId,
-        filename: apiResult.filename,
-        fileHash: apiResult.fileHash,
-        fileSize: apiResult.fileSize,
-        cloudUrl: '',
-      });
-
-      setTxInfo(blockchainResult);
-      setTxStatus('success');
+      let finalTxHash = 'pending';
+      try {
+        const blockchainResult = await sealFileOnBlockchain({
+          fileId: apiResult.fileId,
+          filename: apiResult.filename,
+          fileHash: apiResult.fileHash,
+          fileSize: apiResult.fileSize,
+          cloudUrl: '',
+        });
+        setTxInfo(blockchainResult);
+        setTxStatus('success');
+        finalTxHash = blockchainResult.txHash;
+      } catch (bcErr) {
+        console.warn('Blockchain seal failed:', bcErr.message);
+        setTxStatus('failed');
+        onNotify('⚠️ File saved but blockchain seal pending. Try again later.', 'info');
+      }
 
       // ── Step 6: Done ──
       setUploadStep(6); setUploadProgress(100);
       await delay(300);
 
-      setResult({ ...apiResult, txHash: blockchainResult.txHash });
+      setResult({ ...apiResult, txHash: finalTxHash });
       setUploading(false);
-      onNotify('✅ File uploaded and sealed on blockchain!', 'success');
+      if (finalTxHash !== 'pending') {
+        onNotify('✅ File uploaded and sealed on blockchain!', 'success');
+      }
 
     } catch (err) {
-      // Blockchain fail zali tari backend result save hoto
-      if (err.message?.includes('blockchain') || err.message?.includes('MetaMask') || err.message?.includes('Transaction')) {
-        setTxStatus('failed');
-        setError('⚠️ Backend save zala, pan blockchain seal failed: ' + err.message);
-      } else {
-        setError(err.message);
-      }
+      setError(err.message);
       setUploading(false);
       setUploadStep(0); setUploadProgress(0);
       onNotify('❌ ' + err.message, 'error');
@@ -153,7 +156,7 @@ export default function Upload({ onNotify, walletAddress }) {
                 <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileSelect} />
                 <motion.span className="drop-icon"
                   animate={{ y: [0, -6, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>
                 </motion.span>
                 <div className="drop-title">Drop file here or click to browse</div>
                 <div className="drop-sub">Any file type · Max 100MB · Sealed on Ethereum Sepolia</div>
@@ -175,7 +178,7 @@ export default function Upload({ onNotify, walletAddress }) {
               )}
               <div className="file-selected">
                 <motion.div className="file-icon-box" whileHover={{ rotate: 5 }}>
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg>
                 </motion.div>
                 <div className="file-info">
                   <div className="file-name">{selectedFile.name}</div>
@@ -185,7 +188,7 @@ export default function Upload({ onNotify, walletAddress }) {
                 <motion.button className="btn btn-primary"
                   whileHover={{ scale: 1.04, boxShadow: '0 8px 24px rgba(0,212,255,0.3)' }}
                   whileTap={{ scale: 0.97 }} onClick={handleUpload}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:6,verticalAlign:'middle'}}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Upload &amp; Seal on Blockchain
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 6, verticalAlign: 'middle' }}><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg> Upload &amp; Seal on Blockchain
                 </motion.button>
               </div>
             </motion.div>
@@ -228,9 +231,9 @@ export default function Upload({ onNotify, walletAddress }) {
           {result && !uploading && (
             <motion.div key="success" variants={cardVariants} initial="initial" animate="animate" className="upload-result">
               <motion.div className="result-success-header" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-                <motion.span style={{ fontSize: 32, display:'flex', justifyContent:'center', marginBottom:4 }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              </motion.span>
+                <motion.span style={{ fontSize: 32, display: 'flex', justifyContent: 'center', marginBottom: 4 }} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 300 }}>
+                  <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                </motion.span>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: 18, color: 'var(--green)' }}>File Sealed on Blockchain!</div>
                   <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--font-mono)' }}>{result.filename}</div>
@@ -239,9 +242,9 @@ export default function Upload({ onNotify, walletAddress }) {
 
               <div className="result-details">
                 {[
-                  { label: 'File ID',      value: result.fileId },
+                  { label: 'File ID', value: result.fileId },
                   { label: 'SHA-256 Hash', value: result.fileHash },
-                  { label: 'File Size',    value: formatSize(result.fileSize) },
+                  { label: 'File Size', value: formatSize(result.fileSize) },
                 ].map((item, i) => (
                   <motion.div key={i} className="result-item"
                     initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }}

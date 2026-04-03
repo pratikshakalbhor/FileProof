@@ -32,8 +32,11 @@ export default function Login({ onConnected }) {
   const [connectingWallet, setConnectingWallet] = useState('');
   const [error,            setError]            = useState('');
   const [address,          setAddress]          = useState('');
+  const [isConnecting,     setIsConnecting]     = useState(false);
 
   const connectMetaMask = async () => {
+    if (isConnecting) return; // double click prevent
+    setIsConnecting(true);
     setStatus('connecting');
     setConnectingWallet('MetaMask');
     setError('');
@@ -86,6 +89,8 @@ export default function Login({ onConnected }) {
         setError(err.message || 'Connection failed');
       }
       setStatus('error');
+    } finally {
+      setIsConnecting(false);
     }
   };
 

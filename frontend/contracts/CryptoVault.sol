@@ -48,11 +48,12 @@ contract CryptoVault {
         uint256 timestamp;
     }
 
-    mapping(string => FileRecord)  private files;
-    mapping(address => string[])   private ownerFiles;
-    string[]                       private allFileIds;
-    VerificationLog[]              private verificationLogs;
-    AccessLog[]                    private accessLogs;
+    mapping(string => FileRecord)    private files;
+    mapping(address => string[])     private ownerFiles;
+    mapping(string => address[])     public  sharedAccess;   // fileId => granted addresses
+    string[]                         private allFileIds;
+    VerificationLog[]                private verificationLogs;
+    AccessLog[]                      private accessLogs;
 
     uint256 public totalFiles;
     uint256 public totalVerifications;
