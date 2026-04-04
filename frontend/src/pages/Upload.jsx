@@ -98,7 +98,7 @@ export default function Upload({ onNotify, walletAddress }) {
       } catch (bcErr) {
         console.warn('Blockchain seal failed:', bcErr.message);
         setTxStatus('failed');
-        onNotify('⚠️ File saved but blockchain seal pending. Try again later.', 'info');
+        onNotify(' File saved but blockchain seal pending. Try again later.', 'info');
       }
 
       // ── Step 6: Done ──
@@ -108,14 +108,14 @@ export default function Upload({ onNotify, walletAddress }) {
       setResult({ ...apiResult, txHash: finalTxHash });
       setUploading(false);
       if (finalTxHash !== 'pending') {
-        onNotify('✅ File uploaded and sealed on blockchain!', 'success');
+        onNotify(' File uploaded and sealed on blockchain!', 'success');
       }
 
     } catch (err) {
       setError(err.message);
       setUploading(false);
       setUploadStep(0); setUploadProgress(0);
-      onNotify('❌ ' + err.message, 'error');
+      onNotify(' ' + err.message, 'error');
     }
   };
 

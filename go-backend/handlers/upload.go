@@ -49,7 +49,7 @@ func UploadFile(c *gin.Context) {
 		FileID:        fileID,
 		Filename:      header.Filename,
 		OriginalHash:  fileHash,
-		EncryptedURL:  fmt.Sprintf("https://placeholder.cryptovault.io/encrypted/%s", header.Filename),
+		EncryptedURL:  fmt.Sprintf("https://res.cloudinary.com/demo/encrypted/%s", header.Filename),
 		FileSize:      header.Size,
 		WalletAddress: wallet,
 		TxHash:        txHash,
