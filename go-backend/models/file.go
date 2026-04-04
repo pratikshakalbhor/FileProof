@@ -17,6 +17,10 @@ type FileRecord struct {
 	IsExpired     bool       `json:"isExpired"      bson:"isExpired"`
 	UploadedAt    time.Time `json:"uploadedAt"    bson:"uploadedAt"`
 	VerifiedAt    *time.Time `json:"verifiedAt"   bson:"verifiedAt"`
+	Version       int        `json:"version"      bson:"version"`
+	ParentFileID  string     `json:"parentFileId" bson:"parentFileId"`
+	VersionGroup  string     `json:"versionGroup" bson:"versionGroup"`
+	VersionNote   string     `json:"versionNote"  bson:"versionNote"`
 }
 
 // Stats — Dashboard sathi

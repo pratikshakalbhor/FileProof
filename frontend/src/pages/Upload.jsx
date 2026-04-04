@@ -45,6 +45,9 @@ export default function Upload({ onNotify, walletAddress }) {
   const [error, setError] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [expiryEnabled, setExpiryEnabled] = useState(false);
+  const [isNewVersion, setIsNewVersion]   = useState(false);
+  const [parentFileId, setParentFileId]   = useState('');
+  const [versionNote, setVersionNote]     = useState('');
   const fileInputRef = useRef(null);
 
   const handleFileSelect = (e) => {
@@ -76,7 +79,11 @@ export default function Upload({ onNotify, walletAddress }) {
       // ── Step 3: Go Backend API call ──
       setUploadStep(3); setUploadProgress(45);
       const finalExpiryDate = (expiryEnabled && expiryDate) ? expiryDate : null;
-      const apiResult = await uploadFile(selectedFile, walletAddress, finalExpiryDate);
+      const apiResult = await uploadFile(
+        selectedFile, walletAddress, finalExpiryDate,
+        (isNewVersion && parentFileId) ? parentFileId : null,
+        isNewVersion ? versionNote : null
+      );
 
       // ── Step 4: MongoDB save ──
       setUploadStep(4); setUploadProgress(65);
@@ -186,6 +193,103 @@ export default function Upload({ onNotify, walletAddress }) {
                 <div className="file-info">
                   <div className="file-name">{selectedFile.name}</div>
                   <div className="file-size">{formatSize(selectedFile.size)} · {selectedFile.type || 'unknown'}</div>
+                </div>
+
+                {/* ── Version History Toggle ── */}
+                <div style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '0.5px solid rgba(255,255,255,0.1)',
+                  borderRadius: 10, padding: '14px 16px', marginBottom: 16,
+                  marginTop: 16
+                }}>
+                  {/* Toggle */}
+                  <div
+                    style={{ display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer' }}
+                    onClick={() => setIsNewVersion(v => !v)}
+                  >
+                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                      <div style={{
+                        width:32, height:32, borderRadius:8,
+                        background: isNewVersion ? '#EEEDFE' : 'rgba(255,255,255,0.05)',
+                        border: `0.5px solid ${isNewVersion ? '#7F77DD' : 'rgba(255,255,255,0.1)'}`,
+                        display:'flex', alignItems:'center', justifyContent:'center',
+                        color: isNewVersion ? '#534AB7' : '#888',
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                          stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                        </svg>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:13, fontWeight:500, color:'var(--text-primary,#fff)' }}>
+                          New Version Upload
+                        </div>
+                        <div style={{ fontSize:11, color:'var(--text-muted,#888)', marginTop:2 }}>
+                          {isNewVersion ? 'Existing file cha updated version' : 'Optional — v1, v2, v3 track kara'}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Toggle switch */}
+                    <div style={{
+                      width:40, height:22, borderRadius:20,
+                      background: isNewVersion ? '#7F77DD' : 'rgba(255,255,255,0.1)',
+                      position:'relative', transition:'background 0.2s', flexShrink:0,
+                    }}>
+                      <div style={{
+                        position:'absolute', top:3,
+                        left: isNewVersion ? 20 : 3,
+                        width:16, height:16, borderRadius:'50%',
+                        background:'#fff', transition:'left 0.2s',
+                      }}/>
+                    </div>
+                  </div>
+
+                  {/* Version fields */}
+                  {isNewVersion && (
+                    <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:10 }}>
+                      <div>
+                        <div style={{
+                          fontSize:11, fontWeight:500, color:'#666',
+                          textTransform:'uppercase', letterSpacing:'.04em', marginBottom:6,
+                        }}>
+                          Original File ID (v1)
+                        </div>
+                        <input
+                          value={parentFileId}
+                          onChange={e => setParentFileId(e.target.value)}
+                          placeholder="FILE-XXXXXX... — original file cha ID"
+                          style={{
+                            width:'100%', padding:'8px 12px', borderRadius:8,
+                            border:'0.5px solid rgba(255,255,255,0.15)',
+                            background:'rgba(255,255,255,0.03)',
+                            color:'#fff', fontSize:13, outline:'none',
+                            fontFamily:'monospace',
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <div style={{
+                          fontSize:11, fontWeight:500, color:'#666',
+                          textTransform:'uppercase', letterSpacing:'.04em', marginBottom:6,
+                        }}>
+                          Version Note
+                        </div>
+                        <input
+                          value={versionNote}
+                          onChange={e => setVersionNote(e.target.value)}
+                          placeholder="e.g. Updated salary clause in contract"
+                          style={{
+                            width:'100%', padding:'8px 12px', borderRadius:8,
+                            border:'0.5px solid rgba(255,255,255,0.15)',
+                            background:'rgba(255,255,255,0.03)',
+                            color:'#fff', fontSize:13, outline:'none',
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {/* ── Expiry Date Toggle ── */}
                 <div style={{

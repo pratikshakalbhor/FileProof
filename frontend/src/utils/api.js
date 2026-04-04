@@ -29,10 +29,19 @@ const apiFetch = async (url, options = {}) => {
 // 1. UPLOAD FILE
 // POST /api/upload
 // ─────────────────────────────────────────
-export const uploadFile = async (file, walletAddress) => {
+export const uploadFile = async (file, walletAddress, expiryDate, parentFileId, versionNote) => {
   const formData = new FormData();
   formData.append('file', file);
   formData.append('walletAddress', walletAddress);
+  if (expiryDate) {
+    formData.append('expiryDate', expiryDate);
+  }
+  if (parentFileId) {
+    formData.append('parentFileId', parentFileId);
+  }
+  if (versionNote) {
+    formData.append('versionNote', versionNote);
+  }
 
   try {
     const response = await fetch(`${BASE_URL}/upload`, {
@@ -87,6 +96,14 @@ export const getAllFiles = async (walletAddress) => {
 // ─────────────────────────────────────────
 export const getFileById = async (fileId) => {
   return apiFetch(`/files/${fileId}`);
+};
+
+// ─────────────────────────────────────────
+// 4.5 GET FILE VERSIONS
+// GET /api/files/:id/versions
+// ─────────────────────────────────────────
+export const getFileVersions = async (fileId) => {
+  return apiFetch(`/files/${fileId}/versions`);
 };
 
 // ─────────────────────────────────────────

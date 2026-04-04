@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"cryptovault/database"
 	"cryptovault/models"
@@ -58,6 +59,27 @@ func UploadFile(c *gin.Context) {
 	// Step 6 — File ID
 	fileID := fmt.Sprintf("FILE-%s%d", randomString(6), time.Now().Unix())
 
+	parentFileID := c.Request.FormValue("parentFileId")
+	versionNote  := c.Request.FormValue("versionNote")
+	version      := 1
+	versionGroup := fileID // default — new file = new group
+
+	if parentFileID != "" {
+		var parentRecord models.FileRecord
+		collection := database.GetCollection("files")
+		ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel2()
+
+		err := collection.FindOne(ctx2, bson.M{"fileId": parentFileID}).Decode(&parentRecord)
+		if err == nil {
+			version      = parentRecord.Version + 1
+			versionGroup = parentRecord.VersionGroup
+			if versionGroup == "" {
+				versionGroup = parentFileID
+			}
+		}
+	}
+
 	// Step 7 — Expiry date
 	expiryDateStr := c.Request.FormValue("expiryDate")
 	var expiryDate *time.Time
@@ -82,6 +104,10 @@ func UploadFile(c *gin.Context) {
 		ExpiryDate:    expiryDate,
 		IsExpired:     false,
 		UploadedAt:    time.Now(),
+		Version:       version,
+		ParentFileID:  parentFileID,
+		VersionGroup:  versionGroup,
+		VersionNote:   versionNote,
 	}
 
 	collection := database.GetCollection("files")

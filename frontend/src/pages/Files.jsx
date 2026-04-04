@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Files.css';
 import StatusBadge from '../components/StatusBadge';
 import { pageVariants, cardVariants, tableRow, fadeIn } from '../utils/animations';
-import { getAllFiles, revokeFile, verifyFile } from '../utils/api';
+import { getAllFiles, revokeFile, verifyFile, getFileVersions } from '../utils/api';
 import { getTxUrl } from '../utils/blockchain';
 import ShareModal from '../components/ShareModal';
 
@@ -592,6 +592,9 @@ export default function Files({ onNavigate, walletAddress }) {
   const [shareFile,   setShareFile]   = useState(null); // null = modal closed
   const [timelineFile, setTimelineFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
+  const [versionFile, setVersionFile] = useState(null);
+  const [versions, setVersions]       = useState([]);
+  const [vLoading, setVLoading]       = useState(false);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
   const [search, setSearch]     = useState('');
@@ -995,6 +998,24 @@ export default function Files({ onNavigate, walletAddress }) {
                             </svg>
                           </button>
 
+                          {/* Version History */}
+                          <button
+                            onClick={() => fetchVersions(f)}
+                            title="Version history"
+                            style={{
+                              width:28, height:28, borderRadius:6,
+                              border:'0.5px solid rgba(255,255,255,0.15)',
+                              background:'transparent', color:'#7F77DD',
+                              cursor:'pointer',
+                              display:'flex', alignItems:'center', justifyContent:'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="23 4 23 10 17 10"/>
+                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                          </button>
+
                           {/* Quick Verify */}
                           <motion.button
                             className={`btn sm qv-trigger-btn ${isQVOpen ? 'qv-open' : ''}`}
@@ -1172,6 +1193,167 @@ export default function Files({ onNavigate, walletAddress }) {
         file={previewFile}
         onClose={() => setPreviewFile(null)}
       />
+
+      {/* Version Modal */}
+      {versionFile && (
+        <div
+          onClick={e => e.target===e.currentTarget && setVersionFile(null)}
+          style={{
+            position:'fixed', inset:0, background:'rgba(0,0,0,0.6)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            zIndex:1000, padding:'1rem',
+          }}
+        >
+          <div style={{
+            background:'var(--color-bg,#1a1a1a)',
+            border:'0.5px solid rgba(255,255,255,0.12)',
+            borderRadius:12, width:'100%', maxWidth:460, overflow:'hidden',
+          }}>
+            {/* Header */}
+            <div style={{
+              display:'flex', alignItems:'center', justifyContent:'space-between',
+              padding:'14px 18px',
+              borderBottom:'0.5px solid rgba(255,255,255,0.08)',
+            }}>
+              <div>
+                <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)'}}>
+                  Version History
+                </div>
+                <div style={{fontSize:11, color:'var(--text-muted,#888)', marginTop:2}}>
+                  {versionFile.filename}
+                </div>
+              </div>
+              <button onClick={() => setVersionFile(null)} style={{
+                width:28, height:28, borderRadius:8,
+                border:'0.5px solid rgba(255,255,255,0.15)',
+                background:'transparent', color:'#888',
+                cursor:'pointer', fontSize:15,
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>✕</button>
+            </div>
+
+            {/* Versions list */}
+            <div style={{ padding:'16px 18px' }}>
+              {vLoading ? (
+                <div style={{textAlign:'center', color:'#888', padding:'20px', fontSize:13}}>
+                  Loading versions...
+                </div>
+              ) : (
+                versions.map((v, i) => (
+                  <div key={v.fileId} style={{
+                    display:'flex', gap:14, position:'relative',
+                  }}>
+                    {/* Vertical line */}
+                    {i < versions.length-1 && (
+                      <div style={{
+                        position:'absolute', left:15, top:30,
+                        width:1, height:'calc(100% - 4px)',
+                        background:'rgba(255,255,255,0.08)',
+                      }}/>
+                    )}
+
+                    {/* Version badge */}
+                    <div style={{
+                      width:30, height:30, borderRadius:'50%', flexShrink:0,
+                      background: i===versions.length-1
+                        ? 'rgba(127,119,221,0.2)' : 'rgba(255,255,255,0.05)',
+                      border: `1px solid ${i===versions.length-1 ? '#7F77DD' : 'rgba(255,255,255,0.1)'}`,
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      fontSize:11, fontWeight:500,
+                      color: i===versions.length-1 ? '#7F77DD' : '#888',
+                      zIndex:1,
+                    }}>
+                      v{v.version || i+1}
+                    </div>
+
+                    {/* Content */}
+                    <div style={{
+                      flex:1, paddingBottom: i<versions.length-1 ? 18 : 0,
+                    }}>
+                      <div style={{
+                        display:'flex', alignItems:'center',
+                        justifyContent:'space-between', marginBottom:4,
+                      }}>
+                        <span style={{fontSize:13, fontWeight:500, color:'var(--text-primary,#fff)'}}>
+                          Version {v.version || i+1}
+                          {i===versions.length-1 && (
+                            <span style={{
+                              marginLeft:8, fontSize:10, padding:'2px 6px',
+                              borderRadius:20, background:'rgba(127,119,221,0.2)',
+                              color:'#7F77DD',
+                            }}>Latest</span>
+                          )}
+                        </span>
+                        <span style={{
+                          fontSize:10,
+                          color: v.status==='valid' ? '#639922' : '#E24B4A',
+                        }}>
+                          {v.status}
+                        </span>
+                      </div>
+
+                      {v.versionNote && (
+                        <div style={{fontSize:12, color:'#aaa', marginBottom:4}}>
+                          {v.versionNote}
+                        </div>
+                      )}
+
+                      <div style={{fontSize:11, color:'#666', marginBottom:4}}>
+                        {new Date(v.uploadedAt).toLocaleDateString('en-IN', {
+                          day:'numeric', month:'short', year:'numeric',
+                          hour:'2-digit', minute:'2-digit',
+                        })}
+                      </div>
+
+                      <div style={{
+                        fontSize:10, color:'#555',
+                        fontFamily:'monospace', wordBreak:'break-all',
+                      }}>
+                        {v.originalHash?.slice(0,32)}...
+                      </div>
+
+                      {v.txHash && (
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${v.txHash}`}
+                          target="_blank" rel="noreferrer"
+                          style={{
+                            fontSize:11, color:'#378ADD',
+                            textDecoration:'none', display:'block', marginTop:4,
+                          }}
+                        >
+                          TX: {v.txHash.slice(0,16)}... →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div style={{
+              padding:'12px 18px',
+              borderTop:'0.5px solid rgba(255,255,255,0.08)',
+              display:'flex', justifyContent:'space-between', alignItems:'center',
+            }}>
+              <span style={{fontSize:12, color:'#555'}}>
+                {versions.length} version{versions.length!==1?'s':''} total
+              </span>
+              <button
+                onClick={() => {
+                  setVersionFile(null);
+                }}
+                style={{
+                  fontSize:12, color:'#888', background:'none',
+                  border:'none', cursor:'pointer', padding:0,
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </motion.div>
   );
