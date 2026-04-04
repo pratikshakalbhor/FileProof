@@ -394,11 +394,204 @@ function TimelineModal({ file, onClose }) {
   );
 }
 
+function PreviewModal({ file, onClose }) {
+  if (!file) return null;
+
+  const ext = file.filename?.split('.').pop()?.toLowerCase();
+  const isImage = ['jpg','jpeg','png','gif','webp','svg'].includes(ext);
+  const isPDF   = ext === 'pdf';
+  const isText  = ['txt','md','csv','json','js','py','go','html','css'].includes(ext);
+
+  const ipfsUrl = file.encryptedUrl?.startsWith('https://') ? file.encryptedUrl : null;
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position:'fixed', inset:0, background:'rgba(0,0,0,0.7)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        zIndex:1000, padding:'1rem',
+      }}
+    >
+      <div style={{
+        background:'var(--color-bg,#1a1a1a)',
+        border:'0.5px solid rgba(255,255,255,0.12)',
+        borderRadius:12, width:'100%', maxWidth:680,
+        maxHeight:'85vh', overflow:'hidden',
+        display:'flex', flexDirection:'column',
+      }}>
+
+        {/* Header */}
+        <div style={{
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          padding:'14px 18px', flexShrink:0,
+          borderBottom:'0.5px solid rgba(255,255,255,0.08)',
+        }}>
+          <div>
+            <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)'}}>
+              {file.filename}
+            </div>
+            <div style={{fontSize:11, color:'var(--text-muted,#888)', marginTop:2}}>
+              {Math.round(file.fileSize / 1024)} KB
+              {' · '}
+              {ext?.toUpperCase()} file
+              {' · '}
+              <span style={{color: file.status==='valid' ? '#639922' : '#E24B4A'}}>
+                {file.status === 'valid' ? 'Integrity verified' : 'Tampered'}
+              </span>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width:28, height:28, borderRadius:8,
+            border:'0.5px solid rgba(255,255,255,0.15)',
+            background:'transparent', color:'#888',
+            cursor:'pointer', fontSize:15,
+            display:'flex', alignItems:'center', justifyContent:'center',
+          }}>✕</button>
+        </div>
+
+        {/* Preview area */}
+        <div style={{flex:1, overflow:'auto', padding:'16px'}}>
+
+          {/* Image preview */}
+          {isImage && ipfsUrl && (
+            <div style={{textAlign:'center'}}>
+              <img
+                src={ipfsUrl} alt={file.filename}
+                style={{maxWidth:'100%', maxHeight:480, borderRadius:8, objectFit:'contain'}}
+                onError={e => e.target.style.display='none'}
+              />
+            </div>
+          )}
+
+          {/* PDF preview */}
+          {isPDF && ipfsUrl && (
+            <iframe
+              src={ipfsUrl}
+              title={file.filename}
+              style={{width:'100%', height:480, border:'none', borderRadius:8}}
+            />
+          )}
+
+          {/* No preview — file info dakhav */}
+          {(!isImage && !isPDF) || !ipfsUrl ? (
+            <div style={{
+              display:'flex', flexDirection:'column', alignItems:'center',
+              justifyContent:'center', padding:'40px 20px', gap:16,
+            }}>
+              {/* File type icon */}
+              <div style={{
+                width:64, height:64, borderRadius:16,
+                background: isImage ? '#E6F1FB' : isPDF ? '#FCEBEB' : isText ? '#EAF3DE' : 'rgba(255,255,255,0.05)',
+                border:`1px solid ${isImage ? '#85B7EB' : isPDF ? '#F09595' : isText ? '#97C459' : 'rgba(255,255,255,0.1)'}`,
+                display:'flex', alignItems:'center', justifyContent:'center',
+              }}>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
+                  stroke={isImage ? '#185FA5' : isPDF ? '#A32D2D' : isText ? '#3B6D11' : '#888'}
+                  strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  {isImage
+                    ? <><circle cx="9" cy="13" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></>
+                    : <><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>
+                  }
+                </svg>
+              </div>
+
+              <div style={{textAlign:'center'}}>
+                <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)', marginBottom:6}}>
+                  {file.filename}
+                </div>
+                <div style={{fontSize:12, color:'var(--text-muted,#888)', marginBottom:16}}>
+                  {ipfsUrl
+                    ? 'Preview not available for this file type'
+                    : 'File stored on IPFS — encrypted'}
+                </div>
+
+                {/* File details */}
+                <div style={{
+                  background:'rgba(255,255,255,0.03)',
+                  border:'0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius:8, padding:'12px 20px',
+                  display:'inline-flex', flexDirection:'column', gap:8,
+                  textAlign:'left', minWidth:280,
+                }}>
+                  {[
+                    { label:'File ID',   value: file.fileId },
+                    { label:'Size',      value: `${Math.round(file.fileSize/1024)} KB` },
+                    { label:'Hash',      value: file.originalHash?.slice(0,24)+'...' },
+                    { label:'TX Hash',   value: file.txHash?.slice(0,20)+'...' },
+                    { label:'Uploaded',  value: new Date(file.uploadedAt).toLocaleDateString('en-IN') },
+                    file.expiryDate && {
+                      label:'Expires',
+                      value: new Date(file.expiryDate).toLocaleDateString('en-IN')
+                    },
+                  ].filter(Boolean).map((row, i) => (
+                    <div key={i} style={{display:'flex', gap:12, fontSize:12}}>
+                      <span style={{color:'var(--text-muted,#888)', minWidth:70}}>{row.label}</span>
+                      <span style={{
+                        color:'var(--text-primary,#fff)',
+                        fontFamily:'monospace', fontSize:11,
+                      }}>{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        {/* Footer */}
+        <div style={{
+          display:'flex', gap:8, justifyContent:'flex-end',
+          padding:'12px 18px', flexShrink:0,
+          borderTop:'0.5px solid rgba(255,255,255,0.08)',
+        }}>
+          {file.txHash && (
+            <a
+              href={`https://sepolia.etherscan.io/tx/${file.txHash}`}
+              target="_blank" rel="noreferrer"
+              style={{
+                padding:'7px 14px', borderRadius:8, fontSize:12,
+                border:'0.5px solid rgba(255,255,255,0.15)',
+                color:'#378ADD', textDecoration:'none',
+                display:'flex', alignItems:'center', gap:6,
+              }}
+            >
+              Etherscan →
+            </a>
+          )}
+          {ipfsUrl && (
+            <a
+              href={ipfsUrl}
+              target="_blank" rel="noreferrer"
+              style={{
+                padding:'7px 14px', borderRadius:8, fontSize:12,
+                border:'0.5px solid rgba(255,255,255,0.15)',
+                color:'#7F77DD', textDecoration:'none',
+              }}
+            >
+              Open on IPFS →
+            </a>
+          )}
+          <button onClick={onClose} style={{
+            padding:'7px 16px', borderRadius:8, fontSize:12,
+            border:'0.5px solid rgba(255,255,255,0.15)',
+            background:'transparent', color:'var(--text-primary,#fff)',
+            cursor:'pointer',
+          }}>Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Files page ────────────────────────────────────
 export default function Files({ onNavigate, walletAddress }) {
   const [files,       setFiles]       = useState([]);
   const [shareFile,   setShareFile]   = useState(null); // null = modal closed
   const [timelineFile, setTimelineFile] = useState(null);
+  const [previewFile, setPreviewFile] = useState(null);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
   const [search, setSearch]     = useState('');
@@ -784,6 +977,24 @@ export default function Files({ onNavigate, walletAddress }) {
                             </svg>
                           </button>
 
+                          {/* Preview */}
+                          <button
+                            onClick={() => setPreviewFile(f)}
+                            title="Preview file"
+                            style={{
+                              width:28, height:28, borderRadius:6,
+                              border:'0.5px solid rgba(255,255,255,0.15)',
+                              background:'transparent', color:'#888',
+                              cursor:'pointer',
+                              display:'flex', alignItems:'center', justifyContent:'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          </button>
+
                           {/* Quick Verify */}
                           <motion.button
                             className={`btn sm qv-trigger-btn ${isQVOpen ? 'qv-open' : ''}`}
@@ -933,6 +1144,11 @@ export default function Files({ onNavigate, walletAddress }) {
       <TimelineModal
         file={timelineFile}
         onClose={() => setTimelineFile(null)}
+      />
+
+      <PreviewModal
+        file={previewFile}
+        onClose={() => setPreviewFile(null)}
       />
 
     </motion.div>
