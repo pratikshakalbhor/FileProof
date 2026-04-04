@@ -15,7 +15,8 @@ func main() {
 	// .env load karo
 	err := godotenv.Load()
 	if err != nil {
-		log.Println("Warning: .env file nahi mila")
+		log.Println("Warning: .env file nahi mila — environment variables vaprto")
+		// Production madhe he normal aahe — crash nako
 	}
 
 	// MongoDB connect karo

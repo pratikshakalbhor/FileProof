@@ -606,6 +606,19 @@ export default function Files({ onNavigate, walletAddress }) {
   const [downloading, setDownloading] = useState('');
   const [qvFileId,    setQvFileId]    = useState(null);  // quick-verify panel fileId
 
+  const fetchVersions = async (file) => {
+    setVersionFile(file);
+    setVLoading(true);
+    try {
+      const res = await getFileVersions(file.fileId);
+      setVersions(res.versions || []);
+    } catch {
+      setVersions([file]); // fallback — sirf current file dakhav
+    } finally {
+      setVLoading(false);
+    }
+  };
+
   const fetchFiles = useCallback(async () => {
     setLoading(true); setError('');
     try {
