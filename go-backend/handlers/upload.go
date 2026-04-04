@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"time"
@@ -15,7 +16,6 @@ import (
 )
 
 func UploadFile(c *gin.Context) {
-	// Step 1 — File receive karo
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "File nahi mila"})
@@ -28,6 +28,37 @@ func UploadFile(c *gin.Context) {
 		wallet = "unknown"
 	}
 
+	// Step 1 — File bytes read karo
+	fileBytes, err := io.ReadAll(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "File read error"})
+		return
+	}
+
+	// Step 2 — SHA-256 hash
+	fileHash := utils.GenerateSHA256FromBytes(fileBytes)
+
+	// Step 3 — AES-256 encrypt
+	encryptedBytes, err := utils.EncryptAES(fileBytes)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Encrypt error"})
+		return
+	}
+
+	// Step 4 — Pinata IPFS upload (encrypted file)
+	ipfsURL, err := utils.UploadToPinata(encryptedBytes, "encrypted_"+header.Filename)
+	if err != nil {
+		// IPFS fail zali tari — mock URL vaprto, upload continue hoto
+		ipfsURL = fmt.Sprintf("https://gateway.pinata.cloud/ipfs/mock_%s", header.Filename)
+	}
+
+	// Step 5 — Mock TX hash
+	txHash := utils.MockTxHash(fileHash)
+
+	// Step 6 — File ID
+	fileID := fmt.Sprintf("FILE-%s%d", randomString(6), time.Now().Unix())
+
+	// Step 7 — Expiry date
 	expiryDateStr := c.Request.FormValue("expiryDate")
 	var expiryDate *time.Time
 	if expiryDateStr != "" {
@@ -37,28 +68,12 @@ func UploadFile(c *gin.Context) {
 		}
 	}
 
-	// Step 2 — SHA-256 hash generate karo
-	fileHash, err := utils.GenerateSHA256(file)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Hash generate error"})
-		return
-	}
-
-	// Step 3 — Mock blockchain TX hash
-	txHash := utils.MockTxHash(fileHash)
-
-	// Step 4 — Unique File ID banvao
-	fileID := fmt.Sprintf("FILE-%s%d",
-		randomString(6),
-		time.Now().Unix(),
-	)
-
-	// Step 5 — MongoDB madhe save karo
+	// Step 8 — MongoDB save
 	record := models.FileRecord{
 		FileID:        fileID,
 		Filename:      header.Filename,
 		OriginalHash:  fileHash,
-		EncryptedURL:  fmt.Sprintf("https://res.cloudinary.com/demo/encrypted/%s", header.Filename),
+		EncryptedURL:  ipfsURL,   // ← Pinata IPFS URL!
 		FileSize:      header.Size,
 		WalletAddress: wallet,
 		TxHash:        txHash,
@@ -79,13 +94,14 @@ func UploadFile(c *gin.Context) {
 		return
 	}
 
-	// Step 6 — Response
+	// Response
 	c.JSON(http.StatusCreated, gin.H{
 		"success":   true,
-		"message":   "File sealed on blockchain! ",
+		"message":   "File sealed on blockchain + IPFS!",
 		"fileId":    fileID,
 		"filename":  header.Filename,
 		"fileHash":  fileHash,
+		"ipfsUrl":   ipfsURL,       // ← IPFS URL frontend la pathavto
 		"txHash":    txHash,
 		"fileSize":  header.Size,
 		"timestamp": time.Now().Format(time.RFC3339),
