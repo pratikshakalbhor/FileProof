@@ -216,14 +216,195 @@ function QuickVerifyPanel({ file, onClose }) {
   );
 }
 
+function TimelineModal({ file, onClose }) {
+  if (!file) return null;
+
+  const events = [
+    {
+      label: 'File uploaded',
+      desc:  `${file.filename} encrypted with AES-256`,
+      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      color: '#378ADD',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'SHA-256 hash generated',
+      desc:  file.originalHash
+        ? `${file.originalHash.slice(0, 20)}...`
+        : 'Hash generated',
+      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      color: '#639922',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        </svg>
+      ),
+    },
+    {
+      label: 'Sealed on Ethereum Sepolia',
+      desc:  file.txHash
+        ? `TX: ${file.txHash.slice(0, 18)}...`
+        : 'Transaction pending',
+      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      color: '#7F77DD',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </svg>
+      ),
+    },
+    file.verifiedAt && {
+      label: 'Integrity verified',
+      desc:  `Status: ${file.status === 'valid' ? 'Valid — hash matched' : 'Tampered — hash mismatch!'}`,
+      time:  new Date(file.verifiedAt).toLocaleString(),
+      color: file.status === 'valid' ? '#639922' : '#E24B4A',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <polyline points="9 12 11 14 15 10"/>
+        </svg>
+      ),
+    },
+    file.isRevoked && {
+      label: 'File revoked',
+      desc:  'Access permanently revoked',
+      time:  '—',
+      color: '#E24B4A',
+      icon: (
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+        </svg>
+      ),
+    },
+  ].filter(Boolean);
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '1rem',
+      }}
+    >
+      <div style={{
+        background: 'var(--color-bg, #1a1a1a)',
+        border: '0.5px solid rgba(255,255,255,0.12)',
+        borderRadius: 12, width: '100%', maxWidth: 400, overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px',
+          borderBottom: '0.5px solid rgba(255,255,255,0.08)',
+        }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary,#fff)' }}>
+              Activity Timeline
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted,#888)', marginTop: 2 }}>
+              {file.filename}
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width: 28, height: 28, borderRadius: 8,
+            border: '0.5px solid rgba(255,255,255,0.15)',
+            background: 'transparent', color: '#888',
+            cursor: 'pointer', fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>✕</button>
+        </div>
+
+        {/* Timeline */}
+        <div style={{ padding: '20px 18px' }}>
+          {events.map((ev, i) => (
+            <div key={i} style={{ display: 'flex', gap: 14, position: 'relative' }}>
+
+              {/* Vertical line */}
+              {i < events.length - 1 && (
+                <div style={{
+                  position: 'absolute', left: 15, top: 28,
+                  width: 1, height: 'calc(100% - 4px)',
+                  background: 'rgba(255,255,255,0.08)',
+                }} />
+              )}
+
+              {/* Icon circle */}
+              <div style={{
+                width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                background: `${ev.color}22`,
+                border: `1px solid ${ev.color}55`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: ev.color, zIndex: 1,
+              }}>
+                {ev.icon}
+              </div>
+
+              {/* Content */}
+              <div style={{ paddingBottom: i < events.length - 1 ? 20 : 0, flex: 1 }}>
+                <div style={{
+                  fontSize: 13, fontWeight: 500,
+                  color: 'var(--text-primary,#fff)', marginBottom: 3,
+                }}>
+                  {ev.label}
+                </div>
+                <div style={{
+                  fontSize: 11, color: 'var(--text-muted,#aaa)',
+                  fontFamily: 'monospace', marginBottom: 3,
+                  wordBreak: 'break-all',
+                }}>
+                  {ev.desc}
+                </div>
+                <div style={{ fontSize: 10, color: '#666' }}>{ev.time}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer — Etherscan link */}
+        {file.txHash && (
+          <div style={{
+            padding: '12px 18px',
+            borderTop: '0.5px solid rgba(255,255,255,0.08)',
+            textAlign: 'center',
+          }}>
+            <a href={`https://sepolia.etherscan.io/tx/${file.txHash}`}
+              target="_blank" rel="noreferrer"
+              style={{ fontSize: 12, color: '#378ADD', textDecoration: 'none' }}
+            >
+              View on Etherscan →
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // ── Main Files page ────────────────────────────────────
 export default function Files({ onNavigate, walletAddress }) {
   const [files,       setFiles]       = useState([]);
   const [shareFile,   setShareFile]   = useState(null); // null = modal closed
+  const [timelineFile, setTimelineFile] = useState(null);
   const [loading,     setLoading]     = useState(true);
   const [error,       setError]       = useState('');
-  const [filter,      setFilter]      = useState('all');
-  const [search,      setSearch]      = useState('');
+  const [search, setSearch]     = useState('');
+  const [filterStatus, setFilterStatus] = useState('all'); // all, valid, tampered, revoked
+  const [filterDate, setFilterDate]     = useState('all'); // all, today, week, month
+  const [sortBy, setSortBy]             = useState('newest');
   const [selected,    setSelected]    = useState(null);  // detail panel fileId
   const [revoking,    setRevoking]    = useState('');
   const [downloading, setDownloading] = useState('');
@@ -294,13 +475,36 @@ export default function Files({ onNavigate, walletAddress }) {
     return (b / 1048576).toFixed(2) + ' MB';
   };
 
-  const filtered = files.filter(f => {
-    const matchFilter = filter === 'all' || f.status === filter;
-    const matchSearch = f.filename?.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
-  });
+  const filteredFiles = files
+    .filter(f => {
+      // Search — filename ya fileId match
+      const q = search.toLowerCase();
+      const matchSearch = !q ||
+        f.filename?.toLowerCase().includes(q) ||
+        f.fileId?.toLowerCase().includes(q);
 
-  const count = (s) => s === 'all' ? files.length : files.filter(f => f.status === s).length;
+      // Status filter
+      const matchStatus = filterStatus === 'all' || f.status === filterStatus;
+
+      // Date filter
+      const uploaded = new Date(f.uploadedAt);
+      const now = new Date();
+      const diffDays = (now - uploaded) / (1000 * 60 * 60 * 24);
+      const matchDate =
+        filterDate === 'all'   ? true :
+        filterDate === 'today' ? diffDays < 1 :
+        filterDate === 'week'  ? diffDays < 7 :
+        filterDate === 'month' ? diffDays < 30 : true;
+
+      return matchSearch && matchStatus && matchDate;
+    })
+    .sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.uploadedAt) - new Date(a.uploadedAt);
+      if (sortBy === 'oldest') return new Date(a.uploadedAt) - new Date(b.uploadedAt);
+      if (sortBy === 'name')   return a.filename?.localeCompare(b.filename);
+      if (sortBy === 'size')   return b.fileSize - a.fileSize;
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -324,31 +528,120 @@ export default function Files({ onNavigate, walletAddress }) {
   return (
     <motion.div className="page-container" variants={pageVariants} initial="initial" animate="animate">
 
-      {/* Controls */}
-      <div className="files-controls">
-        <div className="search-bar-wrapper">
-          <span className="search-icon">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </span>
-          <input className="search-input" type="text" placeholder="Search files..."
-            value={search} onChange={e => setSearch(e.target.value)} />
+      {/* ── Search + Filter Bar ── */}
+      <div style={{
+        display: 'flex', flexWrap: 'wrap', gap: 8,
+        marginBottom: 16, alignItems: 'center'
+      }}>
+
+        {/* Search input */}
+        <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
+            style={{
+              position: 'absolute', left: 10, top: '50%',
+              transform: 'translateY(-50%)', color: 'var(--text-muted, #888)',
+              pointerEvents: 'none'
+            }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by filename or File ID..."
+            style={{
+              width: '100%', paddingLeft: 32, paddingRight: 12,
+              height: 36, borderRadius: 8, fontSize: 13,
+              border: '0.5px solid var(--color-border, rgba(255,255,255,0.15))',
+              background: 'transparent', color: 'var(--text-primary, #fff)',
+              outline: 'none',
+            }}
+          />
         </div>
-        <div className="filter-tabs">
-          {['all', 'valid', 'tampered', 'pending', 'revoked'].map(f => (
-            <button key={f}
-              className={`btn ${filter === f ? 'btn-primary' : 'btn-outline'} sm`}
-              onClick={() => setFilter(f)}
-              style={{ fontSize: 11, textTransform: 'uppercase' }}>
-              {f} ({count(f)})
-            </button>
-          ))}
-        </div>
-        <motion.button className="btn btn-outline sm" whileHover={{ scale: 1.02 }} onClick={fetchFiles}>↺</motion.button>
-        <motion.button className="btn btn-primary" whileHover={{ scale: 1.02 }} onClick={() => onNavigate('upload')}>+ Upload</motion.button>
+
+        {/* Status filter */}
+        <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+          style={{
+            height: 36, padding: '0 10px', borderRadius: 8, fontSize: 12,
+            border: '0.5px solid var(--color-border, rgba(255,255,255,0.15))',
+            background: 'var(--color-bg, #0f0f0f)', color: 'var(--text-primary, #fff)',
+            cursor: 'pointer', outline: 'none',
+          }}>
+          <option value="all">All Status</option>
+          <option value="valid">Valid</option>
+          <option value="tampered">Tampered</option>
+          <option value="revoked">Revoked</option>
+        </select>
+
+        {/* Date filter */}
+        <select value={filterDate} onChange={e => setFilterDate(e.target.value)}
+          style={{
+            height: 36, padding: '0 10px', borderRadius: 8, fontSize: 12,
+            border: '0.5px solid var(--color-border, rgba(255,255,255,0.15))',
+            background: 'var(--color-bg, #0f0f0f)', color: 'var(--text-primary, #fff)',
+            cursor: 'pointer', outline: 'none',
+          }}>
+          <option value="all">All Time</option>
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+        </select>
+
+        {/* Sort */}
+        <select value={sortBy} onChange={e => setSortBy(e.target.value)}
+          style={{
+            height: 36, padding: '0 10px', borderRadius: 8, fontSize: 12,
+            border: '0.5px solid var(--color-border, rgba(255,255,255,0.15))',
+            background: 'var(--color-bg, #0f0f0f)', color: 'var(--text-primary, #fff)',
+            cursor: 'pointer', outline: 'none',
+          }}>
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="name">Name A–Z</option>
+          <option value="size">Largest First</option>
+        </select>
+        
+        <motion.button className="btn btn-outline sm" style={{ height: 36 }} whileHover={{ scale: 1.02 }} onClick={fetchFiles} title="Refresh Files">↺</motion.button>
+        <motion.button className="btn btn-primary sm" style={{ height: 36 }} whileHover={{ scale: 1.02 }} onClick={() => onNavigate('upload')} title="Upload">+ Upload</motion.button>
+
       </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-muted, #888)', whiteSpace: 'nowrap' }}>
+          {filteredFiles.length} / {files.length} files
+        </span>
+
+        {(search || filterStatus !== 'all' || filterDate !== 'all') && (
+          <button
+            onClick={() => { setSearch(''); setFilterStatus('all'); setFilterDate('all'); }}
+            style={{
+              fontSize: 12, color: '#E24B4A', background: 'none',
+              border: 'none', cursor: 'pointer', padding: 0, whiteSpace: 'nowrap'
+            }}>
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      {/* Empty state */}
+      {filteredFiles.length === 0 && files.length > 0 && (
+        <div style={{
+          textAlign: 'center', padding: '40px 16px',
+          color: 'var(--text-muted, #888)', fontSize: 14
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>🔍</div>
+          <p style={{ margin: 0 }}>
+            {search ? `"${search}" — no files found` : 'No files match selected filters'}
+          </p>
+          <button onClick={() => { setSearch(''); setFilterStatus('all'); setFilterDate('all'); }}
+            style={{
+              marginTop: 12, fontSize: 12, color: '#378ADD',
+              background: 'none', border: 'none', cursor: 'pointer'
+            }}>
+            Clear filters
+          </button>
+        </div>
+      )}
 
       {/* Error */}
       {error && (
@@ -372,11 +665,7 @@ export default function Files({ onNavigate, walletAddress }) {
 
       {/* Table */}
       <motion.div className="files-section" variants={cardVariants} initial="initial" animate="animate">
-        <div className="files-header">
-          <span className="section-title">{filtered.length} file{filtered.length !== 1 ? 's' : ''}</span>
-        </div>
-
-        {filtered.length === 0 ? (
+        {filteredFiles.length === 0 && files.length === 0 ? (
           <div className="empty-state">
             <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 12 }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)"
@@ -410,7 +699,7 @@ export default function Files({ onNavigate, walletAddress }) {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((f, i) => {
+              {filteredFiles.map((f, i) => {
                 const isShared = Array.isArray(f.sharedWith) && f.sharedWith.length > 0;
                 const isQVOpen = qvFileId === f.fileId;
 
@@ -452,6 +741,25 @@ export default function Files({ onNavigate, walletAddress }) {
                       {/* Actions */}
                       <td>
                         <div style={{ display: 'flex', gap: 5 }} onClick={e => e.stopPropagation()}>
+
+                          {/* Timeline */}
+                          <button
+                            onClick={() => setTimelineFile(f)}
+                            title="Activity Timeline"
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: '0.5px solid rgba(255,255,255,0.15)',
+                              background: 'transparent', color: '#888',
+                              cursor: 'pointer', fontSize: 13,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="12" y1="8" x2="12" y2="12"/>
+                              <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                          </button>
 
                           {/* Quick Verify */}
                           <motion.button
@@ -597,6 +905,12 @@ export default function Files({ onNavigate, walletAddress }) {
           }}
         />
       )}
+
+      {/* Timeline Modal */}
+      <TimelineModal
+        file={timelineFile}
+        onClose={() => setTimelineFile(null)}
+      />
 
     </motion.div>
   );
