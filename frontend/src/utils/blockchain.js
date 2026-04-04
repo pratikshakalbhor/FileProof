@@ -25,7 +25,8 @@ const getProviderAndSigner = async () => {
 // ── Contract instance banvto ──
 const getContract = async (withSigner = true) => {
   if (!CONTRACT_ADDRESS) {
-    throw new Error('CONTRACT_ADDRESS not set in .env file!');
+    console.warn('CONTRACT_ADDRESS not set — blockchain features disabled');
+    return null;
   }
 
   const { provider, signer } = await getProviderAndSigner();
