@@ -103,34 +103,31 @@
 
 /* ─── Quick Verify trigger button ───────── */
 .qv-trigger-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 5px;
   font-size: 11px;
-  background: rgba(0, 212, 255, 0.06);
-  border: 1px solid rgba(0, 212, 255, 0.22);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 0.5px solid rgba(0, 212, 255, 0.3);
+  background: transparent;
   color: var(--accent);
-  padding: 5px 10px;
-  border-radius: 7px;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s;
 }
 
 .qv-trigger-btn:hover {
-  background: rgba(0, 212, 255, 0.12);
-  border-color: rgba(0, 212, 255, 0.45);
+  background: rgba(0, 212, 255, 0.08);
 }
 
 .qv-trigger-btn.qv-open {
-  background: rgba(0, 212, 255, 0.14);
+  background: rgba(0, 212, 255, 0.1);
   border-color: var(--accent);
-  color: var(--accent);
 }
 
-/* ─── Inline Quick Verify panel ─────────── */
 .qv-row td {
   padding: 0 !important;
-  background: transparent;
+  border: none !important;
 }
 
 .qv-panel {

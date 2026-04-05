@@ -65,12 +65,12 @@ const VERIFY_STEPS = [
 
 // ── Inline Quick Verify Panel ─────────────────────────
 function QuickVerifyPanel({ file, onClose }) {
-  const inputRef         = useRef(null);
-  const [picked, setPicked]     = useState(null);
+  const inputRef = useRef(null);
+  const [picked, setPicked] = useState(null);
   const [verifying, setVerifying] = useState(false);
-  const [step, setStep]         = useState(0);
-  const [result, setResult]     = useState(null);
-  const [err, setErr]           = useState('');
+  const [step, setStep] = useState(0);
+  const [result, setResult] = useState(null);
+  const [err, setErr] = useState('');
 
   const handleVerify = async () => {
     if (!picked) return;
@@ -120,8 +120,8 @@ function QuickVerifyPanel({ file, onClose }) {
             initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }}>
             <span className="qv-result-icon">
               {isValid
-                ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                ? <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" /></svg>
+                : <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
               }
             </span>
             <div>
@@ -150,7 +150,7 @@ function QuickVerifyPanel({ file, onClose }) {
         {/* Error */}
         {err && !result && (
           <div className="qv-error">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
             {err}
           </div>
         )}
@@ -167,8 +167,8 @@ function QuickVerifyPanel({ file, onClose }) {
                 onClick={() => inputRef.current?.click()}
                 whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
                 {picked
-                  ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> {picked.name}</>
-                  : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg> Upload same file to verify</>
+                  ? <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /></svg> {picked.name}</>
+                  : <><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 16 12 12 8 16" /><line x1="12" y1="12" x2="12" y2="21" /><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" /></svg> Upload same file to verify</>
                 }
               </motion.button>
 
@@ -189,7 +189,7 @@ function QuickVerifyPanel({ file, onClose }) {
                   <div key={i} className={`qv-step ${step > i ? 'done' : step === i + 1 ? 'active' : ''}`}>
                     <span className="qv-step-dot">
                       {step > i + 1
-                        ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        ? <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--green)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
                         : step === i + 1
                           ? <SpinIcon />
                           : <span className="qv-step-circle" />
@@ -222,70 +222,70 @@ function TimelineModal({ file, onClose }) {
   const events = [
     {
       label: 'File uploaded',
-      desc:  `${file.filename} encrypted with AES-256`,
-      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      desc: `${file.filename} encrypted with AES-256`,
+      time: file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
       color: '#378ADD',
       icon: (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
         </svg>
       ),
     },
     {
       label: 'SHA-256 hash generated',
-      desc:  file.originalHash
+      desc: file.originalHash
         ? `${file.originalHash.slice(0, 20)}...`
         : 'Hash generated',
-      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      time: file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
       color: '#639922',
       icon: (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
         </svg>
       ),
     },
     {
       label: 'Sealed on Ethereum Sepolia',
-      desc:  file.txHash
+      desc: file.txHash
         ? `TX: ${file.txHash.slice(0, 18)}...`
         : 'Transaction pending',
-      time:  file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
+      time: file.uploadedAt ? new Date(file.uploadedAt).toLocaleString() : '—',
       color: '#7F77DD',
       icon: (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
         </svg>
       ),
     },
     file.verifiedAt && {
       label: 'Integrity verified',
-      desc:  `Status: ${file.status === 'valid' ? 'Valid — hash matched' : 'Tampered — hash mismatch!'}`,
-      time:  new Date(file.verifiedAt).toLocaleString(),
+      desc: `Status: ${file.status === 'valid' ? 'Valid — hash matched' : 'Tampered — hash mismatch!'}`,
+      time: new Date(file.verifiedAt).toLocaleString(),
       color: file.status === 'valid' ? '#639922' : '#E24B4A',
       icon: (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-          <polyline points="9 12 11 14 15 10"/>
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <polyline points="9 12 11 14 15 10" />
         </svg>
       ),
     },
     file.isRevoked && {
       label: 'File revoked',
-      desc:  'Access permanently revoked',
-      time:  '—',
+      desc: 'Access permanently revoked',
+      time: '—',
       color: '#E24B4A',
       icon: (
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
           stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          <circle cx="12" cy="12" r="10" />
+          <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
         </svg>
       ),
     },
@@ -301,8 +301,8 @@ function TimelineModal({ file, onClose }) {
       }}
     >
       <div style={{
-        background: 'var(--color-bg, #1a1a1a)',
-        border: '0.5px solid rgba(255,255,255,0.12)',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
         borderRadius: 12, width: '100%', maxWidth: 400, overflow: 'hidden',
       }}>
         {/* Header */}
@@ -398,9 +398,9 @@ function PreviewModal({ file, onClose }) {
   if (!file) return null;
 
   const ext = file.filename?.split('.').pop()?.toLowerCase();
-  const isImage = ['jpg','jpeg','png','gif','webp','svg'].includes(ext);
-  const isPDF   = ext === 'pdf';
-  const isText  = ['txt','md','csv','json','js','py','go','html','css'].includes(ext);
+  const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext);
+  const isPDF = ext === 'pdf';
+  const isText = ['txt', 'md', 'csv', 'json', 'js', 'py', 'go', 'html', 'css'].includes(ext);
 
   const ipfsUrl = file.encryptedUrl?.startsWith('https://') ? file.encryptedUrl : null;
 
@@ -408,58 +408,58 @@ function PreviewModal({ file, onClose }) {
     <div
       onClick={e => e.target === e.currentTarget && onClose()}
       style={{
-        position:'fixed', inset:0, background:'rgba(0,0,0,0.7)',
-        display:'flex', alignItems:'center', justifyContent:'center',
-        zIndex:1000, padding:'1rem',
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '1rem',
       }}
     >
       <div style={{
-        background:'var(--color-bg,#1a1a1a)',
-        border:'0.5px solid rgba(255,255,255,0.12)',
-        borderRadius:12, width:'100%', maxWidth:680,
-        maxHeight:'85vh', overflow:'hidden',
-        display:'flex', flexDirection:'column',
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 12, width: '100%', maxWidth: 680,
+        maxHeight: '85vh', overflow: 'hidden',
+        display: 'flex', flexDirection: 'column',
       }}>
 
         {/* Header */}
         <div style={{
-          display:'flex', alignItems:'center', justifyContent:'space-between',
-          padding:'14px 18px', flexShrink:0,
-          borderBottom:'0.5px solid rgba(255,255,255,0.08)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '14px 18px', flexShrink: 0,
+          borderBottom: '0.5px solid rgba(255,255,255,0.08)',
         }}>
           <div>
-            <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)'}}>
+            <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary,#fff)' }}>
               {file.filename}
             </div>
-            <div style={{fontSize:11, color:'var(--text-muted,#888)', marginTop:2}}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted,#888)', marginTop: 2 }}>
               {Math.round(file.fileSize / 1024)} KB
               {' · '}
               {ext?.toUpperCase()} file
               {' · '}
-              <span style={{color: file.status==='valid' ? '#639922' : '#E24B4A'}}>
+              <span style={{ color: file.status === 'valid' ? '#639922' : '#E24B4A' }}>
                 {file.status === 'valid' ? 'Integrity verified' : 'Tampered'}
               </span>
             </div>
           </div>
           <button onClick={onClose} style={{
-            width:28, height:28, borderRadius:8,
-            border:'0.5px solid rgba(255,255,255,0.15)',
-            background:'transparent', color:'#888',
-            cursor:'pointer', fontSize:15,
-            display:'flex', alignItems:'center', justifyContent:'center',
+            width: 28, height: 28, borderRadius: 8,
+            border: '0.5px solid rgba(255,255,255,0.15)',
+            background: 'transparent', color: '#888',
+            cursor: 'pointer', fontSize: 15,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>✕</button>
         </div>
 
         {/* Preview area */}
-        <div style={{flex:1, overflow:'auto', padding:'16px'}}>
+        <div style={{ flex: 1, overflow: 'auto', padding: '16px' }}>
 
           {/* Image preview */}
           {isImage && ipfsUrl && (
-            <div style={{textAlign:'center'}}>
+            <div style={{ textAlign: 'center' }}>
               <img
                 src={ipfsUrl} alt={file.filename}
-                style={{maxWidth:'100%', maxHeight:480, borderRadius:8, objectFit:'contain'}}
-                onError={e => e.target.style.display='none'}
+                style={{ maxWidth: '100%', maxHeight: 480, borderRadius: 8, objectFit: 'contain' }}
+                onError={e => e.target.style.display = 'none'}
               />
             </div>
           )}
@@ -469,40 +469,40 @@ function PreviewModal({ file, onClose }) {
             <iframe
               src={ipfsUrl}
               title={file.filename}
-              style={{width:'100%', height:480, border:'none', borderRadius:8}}
+              style={{ width: '100%', height: 480, border: 'none', borderRadius: 8 }}
             />
           )}
 
           {/* No preview — file info dakhav */}
           {(!isImage && !isPDF) || !ipfsUrl ? (
             <div style={{
-              display:'flex', flexDirection:'column', alignItems:'center',
-              justifyContent:'center', padding:'40px 20px', gap:16,
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', padding: '40px 20px', gap: 16,
             }}>
               {/* File type icon */}
               <div style={{
-                width:64, height:64, borderRadius:16,
+                width: 64, height: 64, borderRadius: 16,
                 background: isImage ? '#E6F1FB' : isPDF ? '#FCEBEB' : isText ? '#EAF3DE' : 'rgba(255,255,255,0.05)',
-                border:`1px solid ${isImage ? '#85B7EB' : isPDF ? '#F09595' : isText ? '#97C459' : 'rgba(255,255,255,0.1)'}`,
-                display:'flex', alignItems:'center', justifyContent:'center',
+                border: `1px solid ${isImage ? '#85B7EB' : isPDF ? '#F09595' : isText ? '#97C459' : 'rgba(255,255,255,0.1)'}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
                   stroke={isImage ? '#185FA5' : isPDF ? '#A32D2D' : isText ? '#3B6D11' : '#888'}
                   strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
                   {isImage
-                    ? <><circle cx="9" cy="13" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></>
-                    : <><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>
+                    ? <><circle cx="9" cy="13" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></>
+                    : <><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /></>
                   }
                 </svg>
               </div>
 
-              <div style={{textAlign:'center'}}>
-                <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)', marginBottom:6}}>
+              <div style={{ textAlign: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary,#fff)', marginBottom: 6 }}>
                   {file.filename}
                 </div>
-                <div style={{fontSize:12, color:'var(--text-muted,#888)', marginBottom:16}}>
+                <div style={{ fontSize: 12, color: 'var(--text-muted,#888)', marginBottom: 16 }}>
                   {ipfsUrl
                     ? 'Preview not available for this file type'
                     : 'File stored on IPFS — encrypted'}
@@ -510,28 +510,28 @@ function PreviewModal({ file, onClose }) {
 
                 {/* File details */}
                 <div style={{
-                  background:'rgba(255,255,255,0.03)',
-                  border:'0.5px solid rgba(255,255,255,0.08)',
-                  borderRadius:8, padding:'12px 20px',
-                  display:'inline-flex', flexDirection:'column', gap:8,
-                  textAlign:'left', minWidth:280,
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '0.5px solid rgba(255,255,255,0.08)',
+                  borderRadius: 8, padding: '12px 20px',
+                  display: 'inline-flex', flexDirection: 'column', gap: 8,
+                  textAlign: 'left', minWidth: 280,
                 }}>
                   {[
-                    { label:'File ID',   value: file.fileId },
-                    { label:'Size',      value: `${Math.round(file.fileSize/1024)} KB` },
-                    { label:'Hash',      value: file.originalHash?.slice(0,24)+'...' },
-                    { label:'TX Hash',   value: file.txHash?.slice(0,20)+'...' },
-                    { label:'Uploaded',  value: new Date(file.uploadedAt).toLocaleDateString('en-IN') },
+                    { label: 'File ID', value: file.fileId },
+                    { label: 'Size', value: `${Math.round(file.fileSize / 1024)} KB` },
+                    { label: 'Hash', value: file.originalHash?.slice(0, 24) + '...' },
+                    { label: 'TX Hash', value: file.txHash?.slice(0, 20) + '...' },
+                    { label: 'Uploaded', value: new Date(file.uploadedAt).toLocaleDateString('en-IN') },
                     file.expiryDate && {
-                      label:'Expires',
+                      label: 'Expires',
                       value: new Date(file.expiryDate).toLocaleDateString('en-IN')
                     },
                   ].filter(Boolean).map((row, i) => (
-                    <div key={i} style={{display:'flex', gap:12, fontSize:12}}>
-                      <span style={{color:'var(--text-muted,#888)', minWidth:70}}>{row.label}</span>
+                    <div key={i} style={{ display: 'flex', gap: 12, fontSize: 12 }}>
+                      <span style={{ color: 'var(--text-muted,#888)', minWidth: 70 }}>{row.label}</span>
                       <span style={{
-                        color:'var(--text-primary,#fff)',
-                        fontFamily:'monospace', fontSize:11,
+                        color: 'var(--text-primary,#fff)',
+                        fontFamily: 'monospace', fontSize: 11,
                       }}>{row.value}</span>
                     </div>
                   ))}
@@ -543,19 +543,19 @@ function PreviewModal({ file, onClose }) {
 
         {/* Footer */}
         <div style={{
-          display:'flex', gap:8, justifyContent:'flex-end',
-          padding:'12px 18px', flexShrink:0,
-          borderTop:'0.5px solid rgba(255,255,255,0.08)',
+          display: 'flex', gap: 8, justifyContent: 'flex-end',
+          padding: '12px 18px', flexShrink: 0,
+          borderTop: '0.5px solid rgba(255,255,255,0.08)',
         }}>
           {file.txHash && (
             <a
               href={`https://sepolia.etherscan.io/tx/${file.txHash}`}
               target="_blank" rel="noreferrer"
               style={{
-                padding:'7px 14px', borderRadius:8, fontSize:12,
-                border:'0.5px solid rgba(255,255,255,0.15)',
-                color:'#378ADD', textDecoration:'none',
-                display:'flex', alignItems:'center', gap:6,
+                padding: '7px 14px', borderRadius: 8, fontSize: 12,
+                border: '0.5px solid rgba(255,255,255,0.15)',
+                color: '#378ADD', textDecoration: 'none',
+                display: 'flex', alignItems: 'center', gap: 6,
               }}
             >
               Etherscan →
@@ -566,19 +566,19 @@ function PreviewModal({ file, onClose }) {
               href={ipfsUrl}
               target="_blank" rel="noreferrer"
               style={{
-                padding:'7px 14px', borderRadius:8, fontSize:12,
-                border:'0.5px solid rgba(255,255,255,0.15)',
-                color:'#7F77DD', textDecoration:'none',
+                padding: '7px 14px', borderRadius: 8, fontSize: 12,
+                border: '0.5px solid rgba(255,255,255,0.15)',
+                color: '#7F77DD', textDecoration: 'none',
               }}
             >
               Open on IPFS →
             </a>
           )}
           <button onClick={onClose} style={{
-            padding:'7px 16px', borderRadius:8, fontSize:12,
-            border:'0.5px solid rgba(255,255,255,0.15)',
-            background:'transparent', color:'var(--text-primary,#fff)',
-            cursor:'pointer',
+            padding: '7px 16px', borderRadius: 8, fontSize: 12,
+            border: '0.5px solid rgba(255,255,255,0.15)',
+            background: 'transparent', color: 'var(--text-primary,#fff)',
+            cursor: 'pointer',
           }}>Close</button>
         </div>
       </div>
@@ -588,23 +588,23 @@ function PreviewModal({ file, onClose }) {
 
 // ── Main Files page ────────────────────────────────────
 export default function Files({ onNavigate, walletAddress }) {
-  const [files,       setFiles]       = useState([]);
-  const [shareFile,   setShareFile]   = useState(null); // null = modal closed
+  const [files, setFiles] = useState([]);
+  const [shareFile, setShareFile] = useState(null); // null = modal closed
   const [timelineFile, setTimelineFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
   const [versionFile, setVersionFile] = useState(null);
-  const [versions, setVersions]       = useState([]);
-  const [vLoading, setVLoading]       = useState(false);
-  const [loading,     setLoading]     = useState(true);
-  const [error,       setError]       = useState('');
-  const [search, setSearch]     = useState('');
+  const [versions, setVersions] = useState([]);
+  const [vLoading, setVLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all'); // all, valid, tampered, revoked
-  const [filterDate, setFilterDate]     = useState('all'); // all, today, week, month
-  const [sortBy, setSortBy]             = useState('newest');
-  const [selected,    setSelected]    = useState(null);  // detail panel fileId
-  const [revoking,    setRevoking]    = useState('');
+  const [filterDate, setFilterDate] = useState('all'); // all, today, week, month
+  const [sortBy, setSortBy] = useState('newest');
+  const [selected, setSelected] = useState(null);  // detail panel fileId
+  const [revoking, setRevoking] = useState('');
   const [downloading, setDownloading] = useState('');
-  const [qvFileId,    setQvFileId]    = useState(null);  // quick-verify panel fileId
+  const [qvFileId, setQvFileId] = useState(null);  // quick-verify panel fileId
 
   const fetchVersions = async (file) => {
     setVersionFile(file);
@@ -700,18 +700,18 @@ export default function Files({ onNavigate, walletAddress }) {
       const now = new Date();
       const diffDays = (now - uploaded) / (1000 * 60 * 60 * 24);
       const matchDate =
-        filterDate === 'all'   ? true :
-        filterDate === 'today' ? diffDays < 1 :
-        filterDate === 'week'  ? diffDays < 7 :
-        filterDate === 'month' ? diffDays < 30 : true;
+        filterDate === 'all' ? true :
+          filterDate === 'today' ? diffDays < 1 :
+            filterDate === 'week' ? diffDays < 7 :
+              filterDate === 'month' ? diffDays < 30 : true;
 
       return matchSearch && matchStatus && matchDate;
     })
     .sort((a, b) => {
       if (sortBy === 'newest') return new Date(b.uploadedAt) - new Date(a.uploadedAt);
       if (sortBy === 'oldest') return new Date(a.uploadedAt) - new Date(b.uploadedAt);
-      if (sortBy === 'name')   return a.filename?.localeCompare(b.filename);
-      if (sortBy === 'size')   return b.fileSize - a.fileSize;
+      if (sortBy === 'name') return a.filename?.localeCompare(b.filename);
+      if (sortBy === 'size') return b.fileSize - a.fileSize;
       return 0;
     });
 
@@ -752,7 +752,7 @@ export default function Files({ onNavigate, walletAddress }) {
               transform: 'translateY(-50%)', color: 'var(--text-muted, #888)',
               pointerEvents: 'none'
             }}>
-            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
           </svg>
           <input
             value={search}
@@ -809,7 +809,7 @@ export default function Files({ onNavigate, walletAddress }) {
           <option value="name">Name A–Z</option>
           <option value="size">Largest First</option>
         </select>
-        
+
         <motion.button className="btn btn-outline sm" style={{ height: 36 }} whileHover={{ scale: 1.02 }} onClick={fetchFiles} title="Refresh Files">↺</motion.button>
         <motion.button className="btn btn-primary sm" style={{ height: 36 }} whileHover={{ scale: 1.02 }} onClick={() => onNavigate('upload')} title="Upload">+ Upload</motion.button>
 
@@ -987,9 +987,9 @@ export default function Files({ onNavigate, walletAddress }) {
                             }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10"/>
-                              <line x1="12" y1="8" x2="12" y2="12"/>
-                              <line x1="12" y1="16" x2="12.01" y2="16"/>
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="8" x2="12" y2="12" />
+                              <line x1="12" y1="16" x2="12.01" y2="16" />
                             </svg>
                           </button>
 
@@ -998,16 +998,16 @@ export default function Files({ onNavigate, walletAddress }) {
                             onClick={() => setPreviewFile(f)}
                             title="Preview file"
                             style={{
-                              width:28, height:28, borderRadius:6,
-                              border:'0.5px solid rgba(255,255,255,0.15)',
-                              background:'transparent', color:'#888',
-                              cursor:'pointer',
-                              display:'flex', alignItems:'center', justifyContent:'center',
+                              width: 28, height: 28, borderRadius: 6,
+                              border: '0.5px solid rgba(255,255,255,0.15)',
+                              background: 'transparent', color: '#888',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                              <circle cx="12" cy="12" r="3" />
                             </svg>
                           </button>
 
@@ -1016,16 +1016,16 @@ export default function Files({ onNavigate, walletAddress }) {
                             onClick={() => fetchVersions(f)}
                             title="Version history"
                             style={{
-                              width:28, height:28, borderRadius:6,
-                              border:'0.5px solid rgba(255,255,255,0.15)',
-                              background:'transparent', color:'#7F77DD',
-                              cursor:'pointer',
-                              display:'flex', alignItems:'center', justifyContent:'center',
+                              width: 28, height: 28, borderRadius: 6,
+                              border: '0.5px solid rgba(255,255,255,0.15)',
+                              background: 'transparent', color: '#7F77DD',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
                             }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <polyline points="23 4 23 10 17 10"/>
-                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                              <polyline points="23 4 23 10 17 10" />
+                              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
                             </svg>
                           </button>
 
@@ -1051,7 +1051,7 @@ export default function Files({ onNavigate, walletAddress }) {
                             title="Download">
                             {downloading === f.fileId
                               ? <SpinIcon />
-                              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                              : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                             }
                           </motion.button>
 
@@ -1059,11 +1059,11 @@ export default function Files({ onNavigate, walletAddress }) {
                           <button
                             onClick={() => setShareFile(f)}
                             style={{
-                              padding:'5px 10px', fontSize:12,
-                              borderRadius:'var(--border-radius-md)',
-                              border:'0.5px solid var(--color-border-secondary)',
-                              background:'var(--color-background-secondary)',
-                              color:'var(--color-text-primary)', cursor:'pointer'
+                              padding: '4px 10px', fontSize: 11,
+                              borderRadius: 6,
+                              border: '1px solid var(--border)',
+                              background: 'transparent',
+                              color: 'var(--text)', cursor: 'pointer'
                             }}
                           >
                             Share
@@ -1086,8 +1086,8 @@ export default function Files({ onNavigate, walletAddress }) {
                             }}>
                             <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                               stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
                             </svg>
                           </button>
 
@@ -1102,7 +1102,7 @@ export default function Files({ onNavigate, walletAddress }) {
                               onClick={() => handleRevoke(f.fileId)}>
                               {revoking === f.fileId
                                 ? <SpinIcon />
-                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+                                : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="4.93" y1="4.93" x2="19.07" y2="19.07" /></svg>
                               } Revoke
                             </motion.button>
                           )}
@@ -1148,15 +1148,15 @@ export default function Files({ onNavigate, walletAddress }) {
             </div>
             <div className="file-detail-grid">
               {[
-                { label: 'File ID',        value: f.fileId },
-                { label: 'SHA-256 Hash',   value: f.originalHash },
-                { label: 'TX Hash',        value: f.txHash },
-                { label: 'File Size',      value: formatSize(f.fileSize) },
-                { label: 'Status',         value: f.status?.toUpperCase() },
-                { label: 'Visibility',     value: Array.isArray(f.sharedWith) && f.sharedWith.length > 0 ? `Shared (${f.sharedWith.length})` : 'Private' },
-                { label: 'Uploaded At',    value: new Date(f.uploadedAt).toLocaleString() },
+                { label: 'File ID', value: f.fileId },
+                { label: 'SHA-256 Hash', value: f.originalHash },
+                { label: 'TX Hash', value: f.txHash },
+                { label: 'File Size', value: formatSize(f.fileSize) },
+                { label: 'Status', value: f.status?.toUpperCase() },
+                { label: 'Visibility', value: Array.isArray(f.sharedWith) && f.sharedWith.length > 0 ? `Shared (${f.sharedWith.length})` : 'Private' },
+                { label: 'Uploaded At', value: new Date(f.uploadedAt).toLocaleString() },
                 { label: 'Wallet Address', value: f.walletAddress },
-                { label: 'Encrypted URL', value: f.encryptedUrl?.startsWith('http') ? <a href={f.encryptedUrl} target="_blank" rel="noreferrer" style={{color: 'var(--accent)', textDecoration: 'none'}}>View File ↗</a> : <span style={{color: 'var(--muted)'}}>Encrypted (local)</span> },
+                { label: 'Encrypted URL', value: f.encryptedUrl?.startsWith('http') ? <a href={f.encryptedUrl} target="_blank" rel="noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>View File ↗</a> : <span style={{ color: 'var(--muted)' }}>Encrypted (local)</span> },
               ].map((item, i) => (
                 <div key={i} className="file-detail-item">
                   <div className="file-detail-label">{item.label}</div>
@@ -1168,14 +1168,14 @@ export default function Files({ onNavigate, walletAddress }) {
             {/* Quick Actions */}
             <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
               <motion.button className="btn btn-primary sm" whileHover={{ scale: 1.02 }} onClick={() => handleDownload(f)}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                 Download Info
               </motion.button>
               {f.txHash && f.txHash !== 'pending' && (
                 <motion.a href={getTxUrl(f.txHash)} target="_blank" rel="noreferrer"
                   className="btn btn-outline sm" style={{ textDecoration: 'none' }}
                   whileHover={{ scale: 1.02 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><rect x="2" y="7" width="6" height="6" rx="1"/><rect x="9" y="7" width="6" height="6" rx="1"/><rect x="16" y="7" width="6" height="6" rx="1"/><line x1="8" y1="10" x2="9" y2="10"/><line x1="15" y1="10" x2="16" y2="10"/></svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4 }}><rect x="2" y="7" width="6" height="6" rx="1" /><rect x="9" y="7" width="6" height="6" rx="1" /><rect x="16" y="7" width="6" height="6" rx="1" /><line x1="8" y1="10" x2="9" y2="10" /><line x1="15" y1="10" x2="16" y2="10" /></svg>
                   View on Etherscan ↗
                 </motion.a>
               )}
@@ -1210,119 +1210,119 @@ export default function Files({ onNavigate, walletAddress }) {
       {/* Version Modal */}
       {versionFile && (
         <div
-          onClick={e => e.target===e.currentTarget && setVersionFile(null)}
+          onClick={e => e.target === e.currentTarget && setVersionFile(null)}
           style={{
-            position:'fixed', inset:0, background:'rgba(0,0,0,0.6)',
-            display:'flex', alignItems:'center', justifyContent:'center',
-            zIndex:1000, padding:'1rem',
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 1000, padding: '1rem',
           }}
         >
           <div style={{
-            background:'var(--color-bg,#1a1a1a)',
-            border:'0.5px solid rgba(255,255,255,0.12)',
-            borderRadius:12, width:'100%', maxWidth:460, overflow:'hidden',
+            background: 'var(--surface)',
+            border: '1px solid var(--border)',
+            borderRadius: 12, width: '100%', maxWidth: 460, overflow: 'hidden',
           }}>
             {/* Header */}
             <div style={{
-              display:'flex', alignItems:'center', justifyContent:'space-between',
-              padding:'14px 18px',
-              borderBottom:'0.5px solid rgba(255,255,255,0.08)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 18px',
+              borderBottom: '0.5px solid rgba(255,255,255,0.08)',
             }}>
               <div>
-                <div style={{fontSize:14, fontWeight:500, color:'var(--text-primary,#fff)'}}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary,#fff)' }}>
                   Version History
                 </div>
-                <div style={{fontSize:11, color:'var(--text-muted,#888)', marginTop:2}}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted,#888)', marginTop: 2 }}>
                   {versionFile.filename}
                 </div>
               </div>
               <button onClick={() => setVersionFile(null)} style={{
-                width:28, height:28, borderRadius:8,
-                border:'0.5px solid rgba(255,255,255,0.15)',
-                background:'transparent', color:'#888',
-                cursor:'pointer', fontSize:15,
-                display:'flex', alignItems:'center', justifyContent:'center',
+                width: 28, height: 28, borderRadius: 8,
+                border: '0.5px solid rgba(255,255,255,0.15)',
+                background: 'transparent', color: '#888',
+                cursor: 'pointer', fontSize: 15,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>✕</button>
             </div>
 
             {/* Versions list */}
-            <div style={{ padding:'16px 18px' }}>
+            <div style={{ padding: '16px 18px' }}>
               {vLoading ? (
-                <div style={{textAlign:'center', color:'#888', padding:'20px', fontSize:13}}>
+                <div style={{ textAlign: 'center', color: '#888', padding: '20px', fontSize: 13 }}>
                   Loading versions...
                 </div>
               ) : (
                 versions.map((v, i) => (
                   <div key={v.fileId} style={{
-                    display:'flex', gap:14, position:'relative',
+                    display: 'flex', gap: 14, position: 'relative',
                   }}>
                     {/* Vertical line */}
-                    {i < versions.length-1 && (
+                    {i < versions.length - 1 && (
                       <div style={{
-                        position:'absolute', left:15, top:30,
-                        width:1, height:'calc(100% - 4px)',
-                        background:'rgba(255,255,255,0.08)',
-                      }}/>
+                        position: 'absolute', left: 15, top: 30,
+                        width: 1, height: 'calc(100% - 4px)',
+                        background: 'rgba(255,255,255,0.08)',
+                      }} />
                     )}
 
                     {/* Version badge */}
                     <div style={{
-                      width:30, height:30, borderRadius:'50%', flexShrink:0,
-                      background: i===versions.length-1
+                      width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+                      background: i === versions.length - 1
                         ? 'rgba(127,119,221,0.2)' : 'rgba(255,255,255,0.05)',
-                      border: `1px solid ${i===versions.length-1 ? '#7F77DD' : 'rgba(255,255,255,0.1)'}`,
-                      display:'flex', alignItems:'center', justifyContent:'center',
-                      fontSize:11, fontWeight:500,
-                      color: i===versions.length-1 ? '#7F77DD' : '#888',
-                      zIndex:1,
+                      border: `1px solid ${i === versions.length - 1 ? '#7F77DD' : 'rgba(255,255,255,0.1)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 500,
+                      color: i === versions.length - 1 ? '#7F77DD' : '#888',
+                      zIndex: 1,
                     }}>
-                      v{v.version || i+1}
+                      v{v.version || i + 1}
                     </div>
 
                     {/* Content */}
                     <div style={{
-                      flex:1, paddingBottom: i<versions.length-1 ? 18 : 0,
+                      flex: 1, paddingBottom: i < versions.length - 1 ? 18 : 0,
                     }}>
                       <div style={{
-                        display:'flex', alignItems:'center',
-                        justifyContent:'space-between', marginBottom:4,
+                        display: 'flex', alignItems: 'center',
+                        justifyContent: 'space-between', marginBottom: 4,
                       }}>
-                        <span style={{fontSize:13, fontWeight:500, color:'var(--text-primary,#fff)'}}>
-                          Version {v.version || i+1}
-                          {i===versions.length-1 && (
+                        <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary,#fff)' }}>
+                          Version {v.version || i + 1}
+                          {i === versions.length - 1 && (
                             <span style={{
-                              marginLeft:8, fontSize:10, padding:'2px 6px',
-                              borderRadius:20, background:'rgba(127,119,221,0.2)',
-                              color:'#7F77DD',
+                              marginLeft: 8, fontSize: 10, padding: '2px 6px',
+                              borderRadius: 20, background: 'rgba(127,119,221,0.2)',
+                              color: '#7F77DD',
                             }}>Latest</span>
                           )}
                         </span>
                         <span style={{
-                          fontSize:10,
-                          color: v.status==='valid' ? '#639922' : '#E24B4A',
+                          fontSize: 10,
+                          color: v.status === 'valid' ? '#639922' : '#E24B4A',
                         }}>
                           {v.status}
                         </span>
                       </div>
 
                       {v.versionNote && (
-                        <div style={{fontSize:12, color:'#aaa', marginBottom:4}}>
+                        <div style={{ fontSize: 12, color: '#aaa', marginBottom: 4 }}>
                           {v.versionNote}
                         </div>
                       )}
 
-                      <div style={{fontSize:11, color:'#666', marginBottom:4}}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>
                         {new Date(v.uploadedAt).toLocaleDateString('en-IN', {
-                          day:'numeric', month:'short', year:'numeric',
-                          hour:'2-digit', minute:'2-digit',
+                          day: 'numeric', month: 'short', year: 'numeric',
+                          hour: '2-digit', minute: '2-digit',
                         })}
                       </div>
 
                       <div style={{
-                        fontSize:10, color:'#555',
-                        fontFamily:'monospace', wordBreak:'break-all',
+                        fontSize: 10, color: '#555',
+                        fontFamily: 'monospace', wordBreak: 'break-all',
                       }}>
-                        {v.originalHash?.slice(0,32)}...
+                        {v.originalHash?.slice(0, 32)}...
                       </div>
 
                       {v.txHash && (
@@ -1330,11 +1330,11 @@ export default function Files({ onNavigate, walletAddress }) {
                           href={`https://sepolia.etherscan.io/tx/${v.txHash}`}
                           target="_blank" rel="noreferrer"
                           style={{
-                            fontSize:11, color:'#378ADD',
-                            textDecoration:'none', display:'block', marginTop:4,
+                            fontSize: 11, color: '#378ADD',
+                            textDecoration: 'none', display: 'block', marginTop: 4,
                           }}
                         >
-                          TX: {v.txHash.slice(0,16)}... →
+                          TX: {v.txHash.slice(0, 16)}... →
                         </a>
                       )}
                     </div>
@@ -1345,20 +1345,20 @@ export default function Files({ onNavigate, walletAddress }) {
 
             {/* Footer */}
             <div style={{
-              padding:'12px 18px',
-              borderTop:'0.5px solid rgba(255,255,255,0.08)',
-              display:'flex', justifyContent:'space-between', alignItems:'center',
+              padding: '12px 18px',
+              borderTop: '0.5px solid rgba(255,255,255,0.08)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             }}>
-              <span style={{fontSize:12, color:'#555'}}>
-                {versions.length} version{versions.length!==1?'s':''} total
+              <span style={{ fontSize: 12, color: '#555' }}>
+                {versions.length} version{versions.length !== 1 ? 's' : ''} total
               </span>
               <button
                 onClick={() => {
                   setVersionFile(null);
                 }}
                 style={{
-                  fontSize:12, color:'#888', background:'none',
-                  border:'none', cursor:'pointer', padding:0,
+                  fontSize: 12, color: '#888', background: 'none',
+                  border: 'none', cursor: 'pointer', padding: 0,
                 }}
               >
                 Close
