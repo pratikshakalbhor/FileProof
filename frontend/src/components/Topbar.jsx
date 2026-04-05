@@ -4,26 +4,26 @@ import '../styles/Topbar.css';
 const BellIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 
 const INITIAL_NOTIFS = [
-  { id: 1, type: 'success', title: 'File sealed',     msg: 'resume.pdf sealed on Ethereum.',         time: '2m ago',  read: false },
-  { id: 2, type: 'warning', title: 'Tamper detected', msg: 'contract.docx hash mismatch found.',     time: '18m ago', read: false },
-  { id: 3, type: 'info',    title: 'File shared',     msg: 'nft1.png shared with 0x5c38...02b4.',   time: '1h ago',  read: false },
-  { id: 4, type: 'success', title: 'Verify passed',   msg: 'bank_statement.pdf integrity confirmed.',time: '3h ago',  read: true  },
+  { id: 1, type: 'success', title: 'File sealed', msg: 'resume.pdf sealed on Ethereum.', time: '2m ago', read: false },
+  { id: 2, type: 'warning', title: 'Tamper detected', msg: 'contract.docx hash mismatch found.', time: '18m ago', read: false },
+  { id: 3, type: 'info', title: 'File shared', msg: 'nft1.png shared with 0x5c38...02b4.', time: '1h ago', read: false },
+  { id: 4, type: 'success', title: 'Verify passed', msg: 'bank_statement.pdf integrity confirmed.', time: '3h ago', read: true },
 ];
 
 const DOT_COLOR = { success: '#639922', warning: '#E24B4A', info: '#378ADD' };
 
 export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
-  const [open, setOpen]     = useState(false);
+  const [open, setOpen] = useState(false);
   const [notifs, setNotifs] = useState(INITIAL_NOTIFS);
   const [hovAvatar, setHovAvatar] = useState(false);
   const panelRef = useRef(null);
-  const btnRef   = useRef(null);
+  const btnRef = useRef(null);
 
   const shortAddress = walletAddress
     ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
@@ -35,7 +35,7 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
     const handler = (e) => {
       if (
         panelRef.current && !panelRef.current.contains(e.target) &&
-        btnRef.current   && !btnRef.current.contains(e.target)
+        btnRef.current && !btnRef.current.contains(e.target)
       ) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
@@ -43,14 +43,14 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
   }, []);
 
   const markAllRead = () => setNotifs(p => p.map(n => ({ ...n, read: true })));
-  const dismissOne  = (id) => setNotifs(p => p.filter(n => n.id !== id));
+  const dismissOne = (id) => setNotifs(p => p.filter(n => n.id !== id));
 
   return (
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       padding: '0 24px', height: 60,
       borderBottom: '0.5px solid rgba(255,255,255,0.1)',
-      background: 'var(--color-bg, #0f0f0f)',
+      background: 'var(--bg, #0f0f0f)',
       position: 'sticky', top: 0, zIndex: 100, flexShrink: 0,
     }}>
 
@@ -81,14 +81,7 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
             }}>
             <BellIcon />
             {unread > 0 && (
-              <span style={{
-                position: 'absolute', top: -4, right: -4,
-                minWidth: 16, height: 16, borderRadius: 20,
-                background: '#E24B4A', color: '#fff',
-                fontSize: 10, fontWeight: 500,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '0 4px', pointerEvents: 'none',
-              }}>{unread}</span>
+              <span className="notif-badge-count">{unread}</span>
             )}
           </button>
 
@@ -97,7 +90,7 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
             <div ref={panelRef} style={{
               position: 'absolute', top: 'calc(100% + 8px)', right: 0,
               width: 300, borderRadius: 12,
-              background: 'var(--color-bg, #1a1a1a)',
+              background: 'var(--surface, #1a1a1a)',
               border: '0.5px solid rgba(255,255,255,0.12)',
               boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
               overflow: 'hidden', zIndex: 999,
@@ -138,7 +131,7 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
                     <span style={{
                       width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
                       marginTop: 5, background: DOT_COLOR[n.type] ?? '#888',
-                    }}/>
+                    }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-primary,#fff)', marginBottom: 2 }}>
                         {n.title}
@@ -156,8 +149,8 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
                     }}>
                       <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
                       </svg>
                     </button>
                   </div>
@@ -188,12 +181,12 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
           background: 'rgba(255,255,255,0.05)',
           fontSize: 12, color: 'var(--text-primary,#fff)', whiteSpace: 'nowrap',
         }}>
-          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#639922', flexShrink: 0 }}/>
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#639922', flexShrink: 0 }} />
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
             stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
             style={{ flexShrink: 0 }}>
-            <rect x="2" y="5" width="20" height="14" rx="2"/>
-            <line x1="2" y1="10" x2="22" y2="10"/>
+            <rect x="2" y="5" width="20" height="14" rx="2" />
+            <line x1="2" y1="10" x2="22" y2="10" />
           </svg>
           {shortAddress}
         </div>
