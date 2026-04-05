@@ -31,6 +31,7 @@ func main() {
 	r.SetTrustedProxies([]string{"127.0.0.1"}) // ← he add kara
 
 	// CORS — React la allow karo
+	// CORS — Dynamic origin allow karo (Wildcard behavior)
 	r.Use(func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 
@@ -40,6 +41,9 @@ func main() {
 		}
 
 		if allowed[origin] {
+		if origin == "" {
+			c.Header("Access-Control-Allow-Origin", "*")
+		} else {
 			c.Header("Access-Control-Allow-Origin", origin)
 		}
 
