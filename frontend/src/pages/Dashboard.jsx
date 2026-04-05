@@ -12,6 +12,28 @@ export default function Dashboard({ onNavigate, walletAddress }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const [qvLoading, setQvLoading] = useState(false);
+  const [qvResult, setQvResult]   = useState(null);
+
+  const handleQuickVerify = async () => {
+    const id = document.getElementById('qv-input')?.value?.trim();
+    if (!id) return;
+    setQvLoading(true);
+    setQvResult(null);
+    try {
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/files/${id}`
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error('not found');
+      setQvResult({ found: true, file: data.file });
+    } catch {
+      setQvResult({ found: false });
+    } finally {
+      setQvLoading(false);
+    }
+  };
+
   const fetchData = useCallback(async () => {
     setLoading(true); setError('');
     try {
@@ -180,94 +202,187 @@ export default function Dashboard({ onNavigate, walletAddress }) {
         </motion.button>
       </motion.div>
 
-      {/* File Sharding Status Widget */}
-      <div style={{
-        background: 'var(--color-bg)',
-        border: '0.5px solid var(--color-border)',
-        borderRadius: 12, padding: '1.25rem',
-        marginBottom: '1.5rem',
-      }}>
-        <div style={{
-          fontSize: 11, fontWeight: 500, color: 'var(--text-muted)',
-          textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 14,
-        }}>
-          File Sharding Status
+      {/* ── Quick Verify ── */}
+      <motion.div className="section-card" variants={cardVariants}
+        initial="initial" animate="animate"
+        style={{ marginBottom: 16 }}>
+        <div className="files-header" style={{ marginBottom: 14 }}>
+          <span className="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round" style={{ marginRight: 8, verticalAlign: 'middle' }}>
+              <circle cx="11" cy="11" r="8"/>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            Quick Verify
+          </span>
         </div>
 
-        <div style={{
-          fontSize: 13, color: 'var(--text-muted)', marginBottom: 16,
-        }}>
-          Tumchya files{' '}
-          <span style={{ color: '#378ADD', fontWeight: 500 }}>5 IPFS nodes</span>
-          {' '}var distributed aahеt
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input
+            id="qv-input"
+            placeholder="Enter File ID — e.g. FID-MNLX5R20"
+            style={{
+              flex: 1, padding: '9px 14px',
+              background: 'var(--bg)', border: '1px solid var(--border)',
+              borderRadius: 8, fontSize: 13,
+              color: 'var(--text)', outline: 'none',
+              fontFamily: 'var(--font-mono)',
+            }}
+            onKeyDown={e => e.key === 'Enter' && handleQuickVerify()}
+          />
+          <motion.button
+            className="btn btn-primary"
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={handleQuickVerify}
+            disabled={qvLoading}
+          >
+            {qvLoading ? '...' : 'Verify'}
+          </motion.button>
         </div>
 
-        {/* Node grid */}
+        {qvResult && !qvResult.found && (
+          <div style={{
+            marginTop: 10, padding: '10px 14px', borderRadius: 8,
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid var(--border)',
+            fontSize: 12, color: 'var(--muted)',
+          }}>
+            No file found with this ID.
+          </div>
+        )}
+
+        {qvResult?.found && (
+          <motion.div
+            initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+            style={{
+              marginTop: 10, padding: '12px 14px', borderRadius: 8,
+              background: qvResult.file.status === 'valid'
+                ? 'rgba(0,255,157,0.06)' : 'rgba(255,59,92,0.06)',
+              border: `1px solid ${qvResult.file.status === 'valid'
+                ? 'rgba(0,255,157,0.25)' : 'rgba(255,59,92,0.25)'}`,
+            }}>
+            <div style={{
+              fontSize: 13, fontWeight: 700,
+              color: qvResult.file.status === 'valid' ? 'var(--green)' : 'var(--red)',
+              marginBottom: 6,
+            }}>
+              {qvResult.file.status === 'valid'
+                ? '✓ Blockchain seal intact' : '⚠ Hash mismatch detected!'}
+            </div>
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr',
+              gap: 4, fontSize: 11, fontFamily: 'var(--font-mono)',
+              color: 'var(--muted)',
+            }}>
+              <span>File: {qvResult.file.filename}</span>
+              <span>Size: {formatSize(qvResult.file.fileSize)}</span>
+              <span>ID: {qvResult.file.fileId}</span>
+              <span>TX: {qvResult.file.txHash?.slice(0, 14)}...</span>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* ── IPFS Shard Status ── */}
+      <motion.div className="section-card" variants={cardVariants}
+        initial="initial" animate="animate"
+        style={{ marginBottom: 16 }}>
+        <div className="files-header" style={{ marginBottom: 14 }}>
+          <span className="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--green)" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round" style={{ marginRight: 8, verticalAlign: 'middle' }}>
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            IPFS Shard Status
+          </span>
+          <span style={{
+            fontSize: 11, padding: '3px 10px', borderRadius: 20,
+            background: 'rgba(0,255,157,0.1)',
+            border: '1px solid rgba(0,255,157,0.25)',
+            color: 'var(--green)', fontFamily: 'var(--font-mono)',
+          }}>
+            4/5 synced
+          </span>
+        </div>
+
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)',
-          gap: 8, marginBottom: 16,
+          gap: 8, marginBottom: 14,
         }}>
           {[
-            { id: 'Node 1', location: 'Mumbai',    status: 'active', ping: '12ms'  },
-            { id: 'Node 2', location: 'Frankfurt', status: 'active', ping: '48ms'  },
-            { id: 'Node 3', location: 'New York',  status: 'active', ping: '120ms' },
-            { id: 'Node 4', location: 'Singapore', status: 'active', ping: '67ms'  },
-            { id: 'Node 5', location: 'London',    status: 'syncing',ping: '55ms'  },
+            { id: 'Node 1', location: 'Mumbai',    status: 'active',  ping: '12ms'  },
+            { id: 'Node 2', location: 'Frankfurt', status: 'active',  ping: '48ms'  },
+            { id: 'Node 3', location: 'New York',  status: 'active',  ping: '120ms' },
+            { id: 'Node 4', location: 'Singapore', status: 'active',  ping: '67ms'  },
+            { id: 'Node 5', location: 'London',    status: 'syncing', ping: '55ms'  },
           ].map((node, i) => (
-            <div key={i} style={{
-              background: node.status === 'active'
-                ? 'rgba(99,153,34,0.08)' : 'rgba(55,138,221,0.08)',
-              border: `0.5px solid ${node.status === 'active'
-                ? 'rgba(99,153,34,0.3)' : 'rgba(55,138,221,0.3)'}`,
-              borderRadius: 8, padding: '10px 8px', textAlign: 'center',
-            }}>
-              {/* Status dot */}
+            <motion.div key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              style={{
+                background: node.status === 'active'
+                  ? 'rgba(0,255,157,0.05)' : 'rgba(0,212,255,0.05)',
+                border: `1px solid ${node.status === 'active'
+                  ? 'rgba(0,255,157,0.2)' : 'rgba(0,212,255,0.2)'}`,
+                borderRadius: 8, padding: '10px 6px', textAlign: 'center',
+              }}>
+              <motion.div
+                animate={{ scale: node.status === 'active' ? [1, 1.3, 1] : 1 }}
+                transition={{ duration: 2, repeat: Infinity, delay: i * 0.3 }}
+                style={{
+                  width: 7, height: 7, borderRadius: '50%',
+                  background: node.status === 'active' ? 'var(--green)' : 'var(--accent)',
+                  margin: '0 auto 6px',
+                }}
+              />
               <div style={{
-                width: 8, height: 8, borderRadius: '50%',
-                background: node.status === 'active' ? '#639922' : '#378ADD',
-                margin: '0 auto 6px',
-              }}/>
-              <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--text-primary,#fff)', marginBottom: 2 }}>
+                fontSize: 10, fontWeight: 700,
+                color: 'var(--text)', marginBottom: 2,
+                fontFamily: 'var(--font-mono)',
+              }}>
                 {node.id}
               </div>
-              <div style={{ fontSize: 9, color: 'var(--text-muted,#888)', marginBottom: 4 }}>
+              <div style={{ fontSize: 9, color: 'var(--muted)', marginBottom: 3 }}>
                 {node.location}
               </div>
               <div style={{
-                fontSize: 9,
-                color: node.status === 'active' ? '#639922' : '#378ADD',
+                fontSize: 9, fontFamily: 'var(--font-mono)',
+                color: node.status === 'active' ? 'var(--green)' : 'var(--accent)',
               }}>
                 {node.ping}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
         {/* Progress bar */}
-        <div style={{ marginBottom: 8 }}>
+        <div>
           <div style={{
             display: 'flex', justifyContent: 'space-between',
-            fontSize: 11, color: 'var(--text-muted,#888)', marginBottom: 6,
+            fontSize: 11, color: 'var(--muted)',
+            fontFamily: 'var(--font-mono)', marginBottom: 6,
           }}>
             <span>Replication progress</span>
-            <span style={{ color: '#639922' }}>4/5 nodes synced</span>
+            <span style={{ color: 'var(--green)' }}>80%</span>
           </div>
           <div style={{
-            height: 6, background: 'rgba(255,255,255,0.07)',
+            height: 4, background: 'var(--border)',
             borderRadius: 20, overflow: 'hidden',
           }}>
-            <div style={{
-              height: '100%', width: '80%',
-              background: '#639922', borderRadius: 20,
-              transition: 'width 0.5s ease',
-            }}/>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: '80%' }}
+              transition={{ duration: 1, delay: 0.5, ease: 'easeOut' }}
+              style={{ height: '100%', background: 'var(--green)', borderRadius: 20 }}
+            />
           </div>
         </div>
-
-        <div style={{ fontSize: 11, color: '#555', marginTop: 8 }}>
-          Powered by IPFS / Pinata decentralized network
-        </div>
-      </div>
+      </motion.div>
 
       {/* Recent Files */}
       <motion.div className="files-section" variants={cardVariants} initial="initial" animate="animate">
