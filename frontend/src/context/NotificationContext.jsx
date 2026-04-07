@@ -1,56 +1,41 @@
-import { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import Toast from '../components/Toast';
+import { AnimatePresence } from 'framer-motion';
 
-// ─────────────────────────────────────────
-// NotificationContext — global toast manager
-// Usage: const { notify } = useNotification();
-//        notify('File sealed!', 'success');
-//        notify('Tamper detected!', 'error');
-//        notify('Tx pending...', 'pending');
-// ─────────────────────────────────────────
+const NotificationContext = createContext();
 
-const NotificationContext = createContext(null);
+export const useNotification = () => {
+  const context = useContext(NotificationContext);
+  if (!context) {
+    throw new Error('useNotification must be used within a NotificationProvider');
+  }
+  return context;
+};
 
-let _idCounter = 0;
+export const NotificationProvider = ({ children }) => {
+  const [notifications, setNotifications] = useState([]);
 
-export function NotificationProvider({ children }) {
-  const [toasts, setToasts] = useState([]);
-  const timers = useRef({});
-
-  const dismiss = useCallback((id) => {
-    clearTimeout(timers.current[id]);
-    delete timers.current[id];
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+  const addNotification = useCallback((message, type = 'info') => {
+    const id = Date.now();
+    setNotifications((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    }, 5000);
   }, []);
 
-  const notify = useCallback((message, type = 'info', duration = 4500) => {
-    const id = ++_idCounter;
-
-    setToasts((prev) => [
-      // Cap at 5 visible toasts — drop the oldest
-      ...prev.slice(-4),
-      { id, message, type, duration, createdAt: Date.now() },
-    ]);
-
-    timers.current[id] = setTimeout(() => dismiss(id), duration);
-    return id;
-  }, [dismiss]);
-
-  // Convenience shorthands
-  const success = useCallback((msg, dur) => notify(msg, 'success', dur), [notify]);
-  const error   = useCallback((msg, dur) => notify(msg, 'error',   dur), [notify]);
-  const pending = useCallback((msg, dur) => notify(msg, 'pending', dur ?? 6000), [notify]);
-  const info    = useCallback((msg, dur) => notify(msg, 'info',    dur), [notify]);
-
   return (
-    <NotificationContext.Provider value={{ notify, success, error, pending, info, dismiss, toasts }}>
+    <NotificationContext.Provider value={{ addNotification }}>
       {children}
+      <div className="toast-container" style={{
+        position: 'fixed', top: 24, right: 24, zIndex: 9999,
+        display: 'flex', flexDirection: 'column', gap: 12
+      }}>
+        <AnimatePresence>
+          {notifications.map((n) => (
+            <Toast key={n.id} message={n.message} type={n.type} />
+          ))}
+        </AnimatePresence>
+      </div>
     </NotificationContext.Provider>
   );
-}
-
-// ── Custom hook ──
-export function useNotification() {
-  const ctx = useContext(NotificationContext);
-  if (!ctx) throw new Error('useNotification must be used within <NotificationProvider>');
-  return ctx;
-}
+};

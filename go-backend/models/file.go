@@ -2,25 +2,33 @@ package models
 
 import "time"
 
+// VersionRecord — specific version details
+type VersionRecord struct {
+	VersionNumber int       `json:"versionNumber" bson:"versionNumber"`
+	Hash          string    `json:"hash"          bson:"hash"`
+	TxHash        string    `json:"txHash"        bson:"txHash"`
+	Timestamp     time.Time `json:"timestamp"     bson:"timestamp"`
+	Note          string    `json:"note"          bson:"note"`
+}
+
 // FileRecord — MongoDB madhe store hoto
 type FileRecord struct {
-	FileID        string    `json:"fileId"        bson:"fileId"`
-	Filename      string    `json:"filename"      bson:"filename"`
-	OriginalHash  string    `json:"originalHash"  bson:"originalHash"`
-	EncryptedURL  string    `json:"encryptedUrl"  bson:"encryptedUrl"`
-	FileSize      int64     `json:"fileSize"      bson:"fileSize"`
-	WalletAddress string    `json:"walletAddress" bson:"walletAddress"`
-	TxHash        string    `json:"txHash"        bson:"txHash"`
-	Status        string    `json:"status"        bson:"status"`
-	IsRevoked     bool      `json:"isRevoked"     bson:"isRevoked"`
-	ExpiryDate    *time.Time `json:"expiryDate"    bson:"expiryDate"`
-	IsExpired     bool       `json:"isExpired"      bson:"isExpired"`
-	UploadedAt    time.Time `json:"uploadedAt"    bson:"uploadedAt"`
-	VerifiedAt    *time.Time `json:"verifiedAt"   bson:"verifiedAt"`
-	Version       int        `json:"version"      bson:"version"`
-	ParentFileID  string     `json:"parentFileId" bson:"parentFileId"`
-	VersionGroup  string     `json:"versionGroup" bson:"versionGroup"`
-	VersionNote   string     `json:"versionNote"  bson:"versionNote"`
+	FileID        string          `json:"fileId"        bson:"fileId"`
+	PublicID      string          `json:"publicId"      bson:"publicId"` // Navin — public verification sathi
+	Filename      string          `json:"filename"      bson:"filename"`
+	OriginalHash  string          `json:"originalHash"  bson:"originalHash"`
+	EncryptedURL  string          `json:"encryptedUrl"  bson:"encryptedUrl"`
+	FileSize      int64           `json:"fileSize"      bson:"fileSize"`
+	WalletAddress string          `json:"walletAddress" bson:"walletAddress"`
+	TxHash        string          `json:"txHash"        bson:"txHash"`
+	Status        string          `json:"status"        bson:"status"`
+	IsRevoked     bool            `json:"isRevoked"     bson:"isRevoked"`
+	ExpiryDate    *time.Time      `json:"expiryDate"    bson:"expiryDate"`
+	IsExpired     bool            `json:"isExpired"     bson:"isExpired"`
+	UploadedAt    time.Time       `json:"uploadedAt"    bson:"uploadedAt"`
+	VerifiedAt    *time.Time      `json:"verifiedAt"    bson:"verifiedAt"`
+	Version       int             `json:"version"       bson:"version"`
+	Versions      []VersionRecord `json:"versions"      bson:"versions"` // Audit Trail sathi
 }
 
 // Stats — Dashboard sathi

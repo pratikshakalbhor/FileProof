@@ -14,10 +14,21 @@ console.log('DEBUG: REACT_APP_API_URL =', process.env.REACT_APP_API_URL);
 // ── Provider + Signer get karto ──
 const getProviderAndSigner = async () => {
   if (!window.ethereum) {
+    // Check if it's just taking a moment to inject
+    if (document.readyState !== 'complete') {
+      await new Promise(resolve => window.addEventListener('load', resolve));
+    }
+  }
+  
+  if (!window.ethereum) {
     throw new Error('MetaMask not found! Please install MetaMask.');
   }
 
   const provider = new ethers.BrowserProvider(window.ethereum);
+  
+  // Explicitly request account access if not already granted
+  await provider.send("eth_requestAccounts", []);
+  
   const signer = await provider.getSigner();
   return { provider, signer };
 };

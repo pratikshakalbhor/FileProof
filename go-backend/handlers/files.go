@@ -109,32 +109,11 @@ func GetFileVersions(c *gin.Context) {
 		return
 	}
 
-	group := record.VersionGroup
-	if group == "" {
-		group = fileID
-	}
-
-	opts := options.Find().SetSort(bson.M{"version": 1})
-	cursor, err := collection.Find(ctx, bson.M{
-		"$or": []bson.M{
-			{"versionGroup": group},
-			{"fileId": group},
-		},
-	}, opts)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Versions fetch error"})
-		return
-	}
-	defer cursor.Close(ctx)
-
-	var versions []models.FileRecord
-	cursor.All(ctx, &versions)
-
 	c.JSON(http.StatusOK, gin.H{
 		"success":  true,
 		"fileId":   fileID,
-		"versions": versions,
-		"total":    len(versions),
+		"versions": record.Versions,
+		"total":    len(record.Versions),
 	})
 }
 

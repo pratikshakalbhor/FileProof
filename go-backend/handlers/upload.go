@@ -56,29 +56,14 @@ func UploadFile(c *gin.Context) {
 	// Step 5 — Mock TX hash
 	txHash := utils.MockTxHash(fileHash)
 
-	// Step 6 — File ID
+	// Step 6 — File IDs
 	fileID := fmt.Sprintf("FILE-%s%d", randomString(6), time.Now().Unix())
+	publicID := randomString(12)
 
-	parentFileID := c.Request.FormValue("parentFileId")
-	versionNote  := c.Request.FormValue("versionNote")
-	version      := 1
-	versionGroup := fileID // default — new file = new group
-
-	if parentFileID != "" {
-		var parentRecord models.FileRecord
-		collection := database.GetCollection("files")
-		ctx2, cancel2 := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel2()
-
-		err := collection.FindOne(ctx2, bson.M{"fileId": parentFileID}).Decode(&parentRecord)
-		if err == nil {
-			version      = parentRecord.Version + 1
-			versionGroup = parentRecord.VersionGroup
-			if versionGroup == "" {
-				versionGroup = parentFileID
-			}
-		}
-	}
+	versionNote := c.Request.FormValue("versionNote")
+	collection := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
 
 	// Step 7 — Expiry date
 	expiryDateStr := c.Request.FormValue("expiryDate")
@@ -90,46 +75,85 @@ func UploadFile(c *gin.Context) {
 		}
 	}
 
-	// Step 8 — MongoDB save
-	record := models.FileRecord{
-		FileID:        fileID,
-		Filename:      header.Filename,
-		OriginalHash:  fileHash,
-		EncryptedURL:  ipfsURL,   // ← Pinata IPFS URL!
-		FileSize:      header.Size,
-		WalletAddress: wallet,
-		TxHash:        txHash,
-		Status:        "valid",
-		IsRevoked:     false,
-		ExpiryDate:    expiryDate,
-		IsExpired:     false,
-		UploadedAt:    time.Now(),
-		Version:       version,
-		ParentFileID:  parentFileID,
-		VersionGroup:  versionGroup,
-		VersionNote:   versionNote,
-	}
+	// Step 8 — Check if same file exists for this wallet (Versioning)
+	var existing models.FileRecord
+	err = collection.FindOne(ctx, bson.M{
+		"filename":      header.Filename,
+		"walletAddress": wallet,
+	}).Decode(&existing)
 
-	collection := database.GetCollection("files")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	if err == nil {
+		// File file exists — Update Versions array
+		newVersionNum := existing.Version + 1
+		newVersionRecord := models.VersionRecord{
+			VersionNumber: newVersionNum,
+			Hash:          fileHash,
+			TxHash:        txHash,
+			Timestamp:     time.Now(),
+			Note:          versionNote,
+		}
 
-	_, err = collection.InsertOne(ctx, record)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "MongoDB save error"})
-		return
+		_, err = collection.UpdateOne(ctx, bson.M{"fileId": existing.FileID}, bson.M{
+			"$set": bson.M{
+				"originalHash": fileHash,
+				"txHash":       txHash,
+				"version":      newVersionNum,
+				"uploadedAt":   time.Now(),
+			},
+			"$push": bson.M{"versions": newVersionRecord},
+		})
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Update error"})
+			return
+		}
+
+		fileID = existing.FileID
+		publicID = existing.PublicID
+	} else {
+		// New File
+		record := models.FileRecord{
+			FileID:        fileID,
+			PublicID:      publicID,
+			Filename:      header.Filename,
+			OriginalHash:  fileHash,
+			EncryptedURL:  ipfsURL,
+			FileSize:      header.Size,
+			WalletAddress: wallet,
+			TxHash:        txHash,
+			Status:        "valid",
+			IsRevoked:     false,
+			ExpiryDate:    expiryDate,
+			IsExpired:     false,
+			UploadedAt:    time.Now(),
+			Version:       1,
+			Versions: []models.VersionRecord{
+				{
+					VersionNumber: 1,
+					Hash:          fileHash,
+					TxHash:        txHash,
+					Timestamp:     time.Now(),
+					Note:          "Initial Version",
+				},
+			},
+		}
+
+		_, err = collection.InsertOne(ctx, record)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "MongoDB save error"})
+			return
+		}
 	}
 
 	// Response
 	c.JSON(http.StatusCreated, gin.H{
 		"success":   true,
-		"message":   "File sealed on blockchain + IPFS!",
+		"message":   "File sealed on blockchain!",
 		"fileId":    fileID,
+		"publicId":  publicID,
 		"filename":  header.Filename,
 		"fileHash":  fileHash,
-		"ipfsUrl":   ipfsURL,       // ← IPFS URL frontend la pathavto
 		"txHash":    txHash,
-		"fileSize":  header.Size,
 		"timestamp": time.Now().Format(time.RFC3339),
 	})
 }

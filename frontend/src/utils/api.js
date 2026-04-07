@@ -115,6 +115,43 @@ export const revokeFile = async (fileId) => {
 };
 
 // ─────────────────────────────────────────
+// 5.5 DOWNLOAD CERTIFICATE (PDF)
+// GET /api/files/:id/certificate
+// ─────────────────────────────────────────
+export const downloadCertificate = async (fileId) => {
+  try {
+    const response = await fetch(`${BASE_URL}/files/${fileId}/certificate`);
+    if (!response.ok) throw new Error('Certificate generation failed');
+
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Certificate_${fileId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    throw new Error(err.message || 'Failed to download certificate');
+  }
+};
+
+// ─────────────────────────────────────────
+// 5.6 PUBLIC VERIFY
+// POST /api/public/verify/:publicId
+// ─────────────────────────────────────────
+export const publicVerifyFile = async (file, publicId) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(`${BASE_URL}/public/verify/${publicId}`, {
+    method: 'POST',
+    body: formData,
+  });
+  return response.json();
+};
+
+// ─────────────────────────────────────────
 // 6. GET STATS
 // GET /api/stats
 // ─────────────────────────────────────────

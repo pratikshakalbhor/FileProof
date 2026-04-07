@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Files.css';
 import StatusBadge from '../components/StatusBadge';
 import { pageVariants, cardVariants, tableRow, fadeIn } from '../utils/animations';
-import { getAllFiles, revokeFile, verifyFile, getFileVersions } from '../utils/api';
+import { getAllFiles, revokeFile, verifyFile, getFileVersions, downloadCertificate } from '../utils/api';
 import { getTxUrl } from '../utils/blockchain';
 import ShareModal from '../components/ShareModal';
+import { useNotification } from '../context/NotificationContext';
 
 // ── SVG helpers ───────────────────────────────────────
 const LockIcon = () => (
@@ -39,6 +40,15 @@ const ShieldIcon = () => (
     stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
     <polyline points="9 12 11 14 15 10" />
+  </svg>
+);
+
+const CertIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <path d="m9 15 2 2 4-4" />
   </svg>
 );
 
@@ -605,6 +615,16 @@ export default function Files({ onNavigate, walletAddress }) {
   const [revoking, setRevoking] = useState('');
   const [downloading, setDownloading] = useState('');
   const [qvFileId, setQvFileId] = useState(null);  // quick-verify panel fileId
+  const { addNotification } = useNotification();
+
+  const handleGetCertificate = async (fileId) => {
+    try {
+      await downloadCertificate(fileId);
+      addNotification('Certificate generated successfully!', 'success');
+    } catch (err) {
+      addNotification(err.message, 'error');
+    }
+  };
 
   const fetchVersions = async (file) => {
     setVersionFile(file);
@@ -1038,6 +1058,17 @@ export default function Files({ onNavigate, walletAddress }) {
                             title="Quick Verify">
                             <ShieldIcon />
                             {isQVOpen ? 'Close' : 'Verify'}
+                          </motion.button>
+
+                          {/* Certificate */}
+                          <motion.button
+                            className="btn btn-outline sm"
+                            style={{ color: '#639922', borderColor: 'rgba(99,153,34,0.3)' }}
+                            whileHover={{ scale: 1.05, background: 'rgba(99,153,34,0.05)' }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => handleGetCertificate(f.fileId)}
+                            title="Download Certificate">
+                            <CertIcon />
                           </motion.button>
 
                           {/* Download */}

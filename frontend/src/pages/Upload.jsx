@@ -5,6 +5,7 @@ import { pageVariants, staggerContainer, cardVariants, fadeIn } from '../utils/a
 import { uploadFile } from '../utils/api';
 import { sealFileOnBlockchain } from '../utils/blockchain';
 import TxStatus from '../components/TxStatus';
+import { useNotification } from '../context/NotificationContext';
 
 const STEPS = [
   { label: 'Read', desc: 'File read' },
@@ -33,7 +34,7 @@ const LAYERS = [
   },
 ];
 
-export default function Upload({ onNotify, walletAddress }) {
+export default function Upload({ walletAddress }) {
   const [dragging, setDragging] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -45,10 +46,11 @@ export default function Upload({ onNotify, walletAddress }) {
   const [error, setError] = useState('');
   const [expiryDate, setExpiryDate] = useState('');
   const [expiryEnabled, setExpiryEnabled] = useState(false);
-  const [isNewVersion, setIsNewVersion]   = useState(false);
-  const [parentFileId, setParentFileId]   = useState('');
-  const [versionNote, setVersionNote]     = useState('');
+  const [isNewVersion, setIsNewVersion] = useState(false);
+  const [parentFileId, setParentFileId] = useState('');
+  const [versionNote, setVersionNote] = useState('');
   const fileInputRef = useRef(null);
+  const { addNotification } = useNotification();
 
   const handleFileSelect = (e) => {
     if (e.target.files?.[0]) {
@@ -108,7 +110,7 @@ export default function Upload({ onNotify, walletAddress }) {
       } catch (bcErr) {
         console.warn('Blockchain seal failed:', bcErr.message);
         setTxStatus('failed');
-        onNotify(' File saved but blockchain seal pending. Try again later.', 'info');
+        addNotification('File saved but blockchain seal pending.', 'info');
       }
 
       // ── Step 6: Done ──
@@ -118,14 +120,14 @@ export default function Upload({ onNotify, walletAddress }) {
       setResult({ ...apiResult, txHash: finalTxHash });
       setUploading(false);
       if (finalTxHash !== 'pending') {
-        onNotify(' File uploaded and sealed on blockchain!', 'success');
+        addNotification('File uploaded and sealed on blockchain!', 'success');
       }
 
     } catch (err) {
       setError(err.message);
       setUploading(false);
       setUploadStep(0); setUploadProgress(0);
-      onNotify(' ' + err.message, 'error');
+      addNotification(err.message, 'error');
     }
   };
 
@@ -204,28 +206,28 @@ export default function Upload({ onNotify, walletAddress }) {
                 }}>
                   {/* Toggle */}
                   <div
-                    style={{ display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer' }}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer' }}
                     onClick={() => setIsNewVersion(v => !v)}
                   >
-                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <div style={{
-                        width:32, height:32, borderRadius:8,
+                        width: 32, height: 32, borderRadius: 8,
                         background: isNewVersion ? '#EEEDFE' : 'rgba(255,255,255,0.05)',
                         border: `0.5px solid ${isNewVersion ? '#7F77DD' : 'rgba(255,255,255,0.1)'}`,
-                        display:'flex', alignItems:'center', justifyContent:'center',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         color: isNewVersion ? '#534AB7' : '#888',
                       }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="12" cy="12" r="3"/>
-                          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+                          <circle cx="12" cy="12" r="3" />
+                          <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
                         </svg>
                       </div>
                       <div>
-                        <div style={{ fontSize:13, fontWeight:500, color:'var(--text-primary,#fff)' }}>
+                        <div style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-primary,#fff)' }}>
                           New Version Upload
                         </div>
-                        <div style={{ fontSize:11, color:'var(--text-muted,#888)', marginTop:2 }}>
+                        <div style={{ fontSize: 11, color: 'var(--text-muted,#888)', marginTop: 2 }}>
                           {isNewVersion ? 'Existing file cha updated version' : 'Optional — v1, v2, v3 track kara'}
                         </div>
                       </div>
@@ -233,26 +235,26 @@ export default function Upload({ onNotify, walletAddress }) {
 
                     {/* Toggle switch */}
                     <div style={{
-                      width:40, height:22, borderRadius:20,
+                      width: 40, height: 22, borderRadius: 20,
                       background: isNewVersion ? '#7F77DD' : 'rgba(255,255,255,0.1)',
-                      position:'relative', transition:'background 0.2s', flexShrink:0,
+                      position: 'relative', transition: 'background 0.2s', flexShrink: 0,
                     }}>
                       <div style={{
-                        position:'absolute', top:3,
+                        position: 'absolute', top: 3,
                         left: isNewVersion ? 20 : 3,
-                        width:16, height:16, borderRadius:'50%',
-                        background:'#fff', transition:'left 0.2s',
-                      }}/>
+                        width: 16, height: 16, borderRadius: '50%',
+                        background: '#fff', transition: 'left 0.2s',
+                      }} />
                     </div>
                   </div>
 
                   {/* Version fields */}
                   {isNewVersion && (
-                    <div style={{ marginTop:14, display:'flex', flexDirection:'column', gap:10 }}>
+                    <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
                       <div>
                         <div style={{
-                          fontSize:11, fontWeight:500, color:'#666',
-                          textTransform:'uppercase', letterSpacing:'.04em', marginBottom:6,
+                          fontSize: 11, fontWeight: 500, color: '#666',
+                          textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6,
                         }}>
                           Original File ID (v1)
                         </div>
@@ -261,18 +263,18 @@ export default function Upload({ onNotify, walletAddress }) {
                           onChange={e => setParentFileId(e.target.value)}
                           placeholder="FILE-XXXXXX... — original file cha ID"
                           style={{
-                            width:'100%', padding:'8px 12px', borderRadius:8,
-                            border:'0.5px solid rgba(255,255,255,0.15)',
-                            background:'rgba(255,255,255,0.03)',
-                            color:'#fff', fontSize:13, outline:'none',
-                            fontFamily:'monospace',
+                            width: '100%', padding: '8px 12px', borderRadius: 8,
+                            border: '0.5px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.03)',
+                            color: '#fff', fontSize: 13, outline: 'none',
+                            fontFamily: 'monospace',
                           }}
                         />
                       </div>
                       <div>
                         <div style={{
-                          fontSize:11, fontWeight:500, color:'#666',
-                          textTransform:'uppercase', letterSpacing:'.04em', marginBottom:6,
+                          fontSize: 11, fontWeight: 500, color: '#666',
+                          textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6,
                         }}>
                           Version Note
                         </div>
@@ -281,10 +283,10 @@ export default function Upload({ onNotify, walletAddress }) {
                           onChange={e => setVersionNote(e.target.value)}
                           placeholder="e.g. Updated salary clause in contract"
                           style={{
-                            width:'100%', padding:'8px 12px', borderRadius:8,
-                            border:'0.5px solid rgba(255,255,255,0.15)',
-                            background:'rgba(255,255,255,0.03)',
-                            color:'#fff', fontSize:13, outline:'none',
+                            width: '100%', padding: '8px 12px', borderRadius: 8,
+                            border: '0.5px solid rgba(255,255,255,0.15)',
+                            background: 'rgba(255,255,255,0.03)',
+                            color: '#fff', fontSize: 13, outline: 'none',
                           }}
                         />
                       </div>
@@ -313,10 +315,10 @@ export default function Upload({ onNotify, walletAddress }) {
                       }}>
                         <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
                           stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                          <line x1="16" y1="2" x2="16" y2="6"/>
-                          <line x1="8" y1="2" x2="8" y2="6"/>
-                          <line x1="3" y1="10" x2="21" y2="10"/>
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                          <line x1="16" y1="2" x2="16" y2="6" />
+                          <line x1="8" y1="2" x2="8" y2="6" />
+                          <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
                       </div>
                       <div>
@@ -342,7 +344,7 @@ export default function Upload({ onNotify, walletAddress }) {
                         left: expiryEnabled ? 20 : 3,
                         width: 16, height: 16, borderRadius: '50%',
                         background: '#fff', transition: 'left 0.2s',
-                      }}/>
+                      }} />
                     </div>
                   </div>
 
@@ -379,9 +381,9 @@ export default function Upload({ onNotify, walletAddress }) {
                         }}>
                           <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                            <line x1="12" y1="9" x2="12" y2="13"/>
-                            <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            <line x1="12" y1="9" x2="12" y2="13" />
+                            <line x1="12" y1="17" x2="12.01" y2="17" />
                           </svg>
                           This file will auto-lock on{' '}
                           <strong>

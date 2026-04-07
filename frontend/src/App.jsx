@@ -14,7 +14,6 @@ import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 import PublicVerify from './pages/PublicVerify';
 import AuditLog from './pages/AuditLog';
-import { notifVariants } from './utils/animations';
 import { NotificationProvider } from './context/NotificationContext';
 
 const NAV_LABELS = {

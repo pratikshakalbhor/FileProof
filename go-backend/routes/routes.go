@@ -13,7 +13,9 @@ func RegisterRoutes(r *gin.Engine) {
 		api.GET("/files",            handlers.GetAllFiles)
 		api.GET("/files/:id",        handlers.GetFileByID)
 		api.GET("/files/:id/versions", handlers.GetFileVersions)
+		api.GET("/files/:id/certificate", handlers.DownloadCertificate)
 		api.PUT("/files/:id/revoke", handlers.RevokeFile)
 		api.GET("/stats",            handlers.GetStats)
+		api.GET("/public/verify/:id", handlers.PublicVerify)
 	}
 }
