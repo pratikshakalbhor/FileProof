@@ -54,7 +54,7 @@ func main() {
 	// Home route
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{
-			"message": "CryptoVault Go Backend Running! 🚀",
+			"message": "CryptoVault Go Backend Running!",
 			"version": "1.0.0",
 		})
 	})
