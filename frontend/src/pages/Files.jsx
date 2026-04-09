@@ -5,6 +5,7 @@ import StatusBadge from '../components/StatusBadge';
 import { pageVariants, cardVariants, tableRow, fadeIn } from '../utils/animations';
 import { getAllFiles, revokeFile, verifyFile, getFileVersions, downloadCertificate } from '../utils/api';
 import { getTxUrl } from '../utils/blockchain';
+import { generateCertificate } from '../utils/certificate';
 import ShareModal from '../components/ShareModal';
 import { useNotification } from '../context/NotificationContext';
 
@@ -1061,15 +1062,23 @@ export default function Files({ onNavigate, walletAddress }) {
                           </motion.button>
 
                           {/* Certificate */}
-                          <motion.button
-                            className="btn btn-outline sm"
-                            style={{ color: '#639922', borderColor: 'rgba(99,153,34,0.3)' }}
-                            whileHover={{ scale: 1.05, background: 'rgba(99,153,34,0.05)' }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handleGetCertificate(f.fileId)}
-                            title="Download Certificate">
-                            <CertIcon />
-                          </motion.button>
+                          <button
+                            onClick={() => generateCertificate(f)}
+                            title="Download Certificate"
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: '0.5px solid rgba(255,255,255,0.15)',
+                              background: 'transparent', color: 'var(--green)',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <polyline points="9 12 11 14 15 10" />
+                            </svg>
+                          </button>
 
                           {/* Download */}
                           <motion.button

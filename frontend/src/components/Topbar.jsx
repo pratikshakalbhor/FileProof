@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import '../styles/Topbar.css';
+import ThemeToggle from './ThemeToggle';
 
 const BellIcon = () => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
@@ -71,6 +72,7 @@ export default function Topbar({ pageTitle, walletAddress, onDisconnect }) {
       }}>
 
         {/* Bell */}
+        <ThemeToggle />
         <div style={{ position: 'relative', flexShrink: 0 }}>
           <button ref={btnRef} onClick={() => { setOpen(o => !o); if (!open) markAllRead(); }}
             style={{

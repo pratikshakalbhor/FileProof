@@ -168,3 +168,38 @@ body {
   border-color: var(--red);
   color: var(--red);
 }
+
+/* global.css madhe add kara — bottom la */
+[data-theme="light"] {
+  --bg: #f8f9fa;
+  --surface: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --text: #1a1a2e;
+  --muted: #6c757d;
+  --accent: #0077cc;
+  --green: #28a745;
+  --red: #dc3545;
+}
+
+[data-theme="light"] .app {
+  background: #f0f2f5;
+}
+
+[data-theme="light"] .section-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .stat-card {
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .table th {
+  background: #f8f9fa;
+  color: #495057;
+}
+
+[data-theme="light"] .sidebar {
+  background: #1a1a2e;
+}
