@@ -59,7 +59,6 @@ export default function App() {
   if (!walletAddress) {
     return (
       <NotificationProvider>
-        <div className="grid-bg" />
         <Login onConnected={handleConnected} />
       </NotificationProvider>
     );
@@ -67,7 +66,6 @@ export default function App() {
 
   return (
     <NotificationProvider>
-      <div className="grid-bg" />
       <div className="noise" />
 
       <div className="app">

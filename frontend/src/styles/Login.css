@@ -6,6 +6,11 @@
   position: relative;
   overflow: hidden;
   padding: 20px;
+  background: radial-gradient(ellipse at top left,
+    #1a1035 0%,
+    #0a0a1a 40%,
+    #000d1a 100%);
+  font-family: var(--font-sans);
 }
 
 .login-orb {

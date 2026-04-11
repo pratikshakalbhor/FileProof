@@ -1,5 +1,5 @@
 /* ── Landing Page ── */
-.landing-page { min-height:100vh; background:var(--bg); color:var(--text); font-family:var(--font-display); overflow-x:hidden; position:relative; }
+.landing-page { min-height:100vh; background: radial-gradient(ellipse at top left, #1a1035 0%, #0a0a1a 40%, #000d1a 100%); color:var(--text); font-family:var(--font-sans); overflow-x:hidden; position:relative; }
 .orb { position:fixed; border-radius:50%; filter:blur(80px); opacity:0.1; pointer-events:none; }
 .orb-1 { width:500px; height:500px; background:#00d4ff; top:-100px; left:-100px; }
 .orb-2 { width:400px; height:400px; background:#7c3aed; bottom:-100px; right:-100px; }
