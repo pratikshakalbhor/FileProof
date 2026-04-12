@@ -8,6 +8,7 @@ import { getAllFiles, revokeFile, verifyFile, getFileVersions } from '../utils/a
 import { getTxUrl } from '../utils/blockchain';
 import { generateCertificate } from '../utils/certificate';
 import ShareModal from '../components/ShareModal';
+import AccessControlModal from '../components/AccessControlModal';
 import { useNotification } from '../context/NotificationContext';
 
 // ── SVG helpers ───────────────────────────────────────
@@ -590,9 +591,320 @@ function PreviewModal({ file, onClose }) {
   );
 }
 
+function FileDetailsModal({ file, onClose, onCertificate }) {
+  const [copied, setCopied] = useState('');
+
+  if (!file) return null;
+
+  const copyText = (text, key) => {
+    navigator.clipboard.writeText(text);
+    setCopied(key);
+    setTimeout(() => setCopied(''), 2000);
+  };
+
+  const isExpired = file.expiryDate && new Date(file.expiryDate) < new Date();
+
+  const formatSize = (b) => {
+    if (!b) return '—';
+    if (b < 1024) return b + ' B';
+    if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+    return (b / 1048576).toFixed(2) + ' MB';
+  };
+
+  const CopyBtn = ({ text, id }) => (
+    <motion.button
+      whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
+      onClick={() => copyText(text, id)}
+      style={{
+        background: 'none', border: 'none', cursor: 'pointer',
+        color: copied === id ? 'var(--green)' : 'var(--muted)',
+        padding: '2px 4px', borderRadius: 4,
+        display: 'flex', alignItems: 'center',
+        transition: 'color 0.2s',
+      }}>
+      {copied === id ? (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="20 6 9 17 4 12"/>
+        </svg>
+      ) : (
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="9" y="9" width="13" height="13" rx="2"/>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+        </svg>
+      )}
+    </motion.button>
+  );
+
+  const Row = ({ label, value, mono, copyKey, color }) => (
+    <div style={{
+      display: 'flex', justifyContent: 'space-between',
+      alignItems: 'flex-start', padding: '10px 0',
+      borderBottom: '0.5px solid var(--border)',
+      gap: 12,
+    }}>
+      <span style={{
+        fontSize: 12, color: 'var(--muted)',
+        flexShrink: 0, minWidth: 120,
+      }}>
+        {label}
+      </span>
+      <div style={{
+        display: 'flex', alignItems: 'center',
+        gap: 6, minWidth: 0, flex: 1, justifyContent: 'flex-end',
+      }}>
+        <span style={{
+          fontSize: 12,
+          fontFamily: mono ? 'var(--font-mono)' : 'inherit',
+          color: color || 'var(--text)',
+          wordBreak: 'break-all', textAlign: 'right',
+        }}>
+          {value || '—'}
+        </span>
+        {copyKey && value && (
+          <CopyBtn text={value} id={copyKey} />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      onClick={e => e.target === e.currentTarget && onClose()}
+      style={{
+        position: 'fixed', inset: 0,
+        background: 'rgba(0,0,0,0.65)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1000, padding: '1rem',
+      }}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        style={{
+          background: 'var(--surface)',
+          border: '1px solid var(--border)',
+          borderRadius: 16, width: '100%', maxWidth: 560,
+          maxHeight: '90vh', overflow: 'hidden',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        {/* ── Header ── */}
+        <div style={{
+          display: 'flex', alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '16px 20px',
+          borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 10,
+              background: 'rgba(0,212,255,0.08)',
+              border: '1px solid rgba(0,212,255,0.2)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 10, fontWeight: 700, color: 'var(--accent)',
+            }}>
+              {file.filename?.split('.').pop()?.toUpperCase()}
+            </div>
+            <div>
+              <div style={{
+                fontSize: 15, fontWeight: 600, color: 'var(--text)',
+              }}>
+                {file.filename}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>
+                {formatSize(file.fileSize)} · {new Date(file.uploadedAt).toLocaleDateString()}
+              </div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width: 30, height: 30, borderRadius: 8,
+            border: '1px solid var(--border)',
+            background: 'transparent', color: 'var(--muted)',
+            cursor: 'pointer', fontSize: 16,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>✕</button>
+        </div>
+
+        {/* ── Status Banner ── */}
+        <div style={{
+          margin: '16px 20px 0',
+          padding: '10px 14px', borderRadius: 10,
+          background: file.status === 'valid'
+            ? 'rgba(0,255,157,0.06)' : file.status === 'tampered'
+            ? 'rgba(255,59,92,0.06)' : 'rgba(127,119,221,0.06)',
+          border: `1px solid ${file.status === 'valid'
+            ? 'rgba(0,255,157,0.2)' : file.status === 'tampered'
+            ? 'rgba(255,59,92,0.2)' : 'rgba(127,119,221,0.2)'}`,
+          display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+          <motion.div
+            animate={{ scale: [1, 1.3, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            style={{
+              width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+              background: file.status === 'valid' ? 'var(--green)'
+                : file.status === 'tampered' ? 'var(--red)' : '#7F77DD',
+            }}
+          />
+          <span style={{
+            fontSize: 13, fontWeight: 600,
+            color: file.status === 'valid' ? 'var(--green)'
+              : file.status === 'tampered' ? 'var(--red)' : '#7F77DD',
+          }}>
+            {file.status === 'valid'
+              ? 'Blockchain Seal Intact — File Unmodified'
+              : file.status === 'tampered'
+              ? 'TAMPER DETECTED — Hash Mismatch!'
+              : 'File Access Revoked'}
+          </span>
+          {isExpired && (
+            <span style={{
+              marginLeft: 'auto', fontSize: 10, padding: '2px 8px',
+              borderRadius: 20, background: 'rgba(239,159,39,0.1)',
+              border: '1px solid rgba(239,159,39,0.3)', color: '#EF9F27',
+            }}>
+              Expired
+            </span>
+          )}
+        </div>
+
+        {/* ── Scrollable Content ── */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+
+          {/* File Info */}
+          <div style={{
+            fontSize: 11, fontWeight: 600, color: 'var(--muted)',
+            textTransform: 'uppercase', letterSpacing: '.05em',
+            marginBottom: 4,
+          }}>
+            File Information
+          </div>
+          <Row label="File ID"       value={file.fileId}    mono copyKey="fileId" />
+          <Row label="Filename"      value={file.filename} />
+          <Row label="Size"          value={formatSize(file.fileSize)} />
+          <Row label="Uploaded"      value={new Date(file.uploadedAt).toLocaleString()} />
+          {file.expiryDate && (
+            <Row label="Expires"
+              value={new Date(file.expiryDate).toLocaleDateString('en-IN')}
+              color={isExpired ? 'var(--red)' : '#EF9F27'}
+            />
+          )}
+
+          {/* Cryptographic Proof */}
+          <div style={{
+            fontSize: 11, fontWeight: 600, color: 'var(--muted)',
+            textTransform: 'uppercase', letterSpacing: '.05em',
+            marginTop: 20, marginBottom: 4,
+          }}>
+            Cryptographic Proof
+          </div>
+          <Row label="SHA-256 Hash"
+            value={file.originalHash}
+            mono copyKey="hash"
+            color="var(--accent)"
+          />
+          <Row label="Algorithm"  value="SHA-256 + AES-256-GCM" />
+          <Row label="Storage"    value="IPFS via Pinata (Decentralized)" />
+
+          {/* Blockchain Record */}
+          <div style={{
+            fontSize: 11, fontWeight: 600, color: 'var(--muted)',
+            textTransform: 'uppercase', letterSpacing: '.05em',
+            marginTop: 20, marginBottom: 4,
+          }}>
+            Blockchain Record
+          </div>
+          <Row label="Network"   value="Ethereum Sepolia Testnet" color="#7F77DD" />
+          <Row label="TX Hash"
+            value={file.txHash}
+            mono copyKey="tx"
+            color="#7F77DD"
+          />
+          <Row label="Status"
+            value={file.status?.toUpperCase()}
+            color={file.status === 'valid' ? 'var(--green)' : 'var(--red)'}
+          />
+
+          {/* Owner */}
+          <div style={{
+            fontSize: 11, fontWeight: 600, color: 'var(--muted)',
+            textTransform: 'uppercase', letterSpacing: '.05em',
+            marginTop: 20, marginBottom: 4,
+          }}>
+            Owner
+          </div>
+          <Row label="Wallet Address"
+            value={file.walletAddress}
+            mono copyKey="wallet"
+            color="#EF9F27"
+          />
+
+        </div>
+
+        {/* ── Footer Actions ── */}
+        <div style={{
+          padding: '14px 20px',
+          borderTop: '1px solid var(--border)',
+          display: 'flex', gap: 8, flexShrink: 0,
+          flexWrap: 'wrap',
+        }}>
+
+          {/* Certificate */}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => onCertificate(file)}
+            className="btn btn-primary sm"
+            style={{ flex: 1 }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{ marginRight: 6, verticalAlign: 'middle' }}>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <polyline points="9 12 11 14 15 10"/>
+            </svg>
+            Download Certificate
+          </motion.button>
+
+          {/* Etherscan */}
+          {file.txHash && file.txHash !== 'pending' && (
+            <motion.a
+              href={`https://sepolia.etherscan.io/tx/${file.txHash}`}
+              target="_blank" rel="noreferrer"
+              whileHover={{ scale: 1.02 }}
+              className="btn btn-outline sm"
+              style={{ textDecoration: 'none', flex: 1, textAlign: 'center' }}>
+              Etherscan ↗
+            </motion.a>
+          )}
+
+          {/* Public Verify Link */}
+          <motion.button
+            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+            onClick={() => {
+              const link = `${window.location.origin}/verify-public?fileId=${file.fileId}`;
+              navigator.clipboard.writeText(link);
+              alert('Verification link copied!');
+            }}
+            className="btn btn-outline sm"
+            style={{ flex: 1 }}>
+            Copy Verify Link
+          </motion.button>
+
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 // ── Main Files page ────────────────────────────────────
 export default function Files({ onNavigate, walletAddress }) {
   const [files, setFiles] = useState([]);
+  const [detailFile, setDetailFile] = useState(null);
+  const [accessFile, setAccessFile] = useState(null);
   const [shareFile, setShareFile] = useState(null); // null = modal closed
   const [timelineFile, setTimelineFile] = useState(null);
   const [previewFile, setPreviewFile] = useState(null);
@@ -979,6 +1291,27 @@ export default function Files({ onNavigate, walletAddress }) {
                       <td>
                         <div style={{ display: 'flex', gap: 5 }} onClick={e => e.stopPropagation()}>
 
+                          {/* File Info */}
+                          <button
+                            onClick={() => setDetailFile(f)}
+                            title="File Details"
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: '0.5px solid rgba(0,212,255,0.3)',
+                              background: 'rgba(0,212,255,0.05)',
+                              color: 'var(--accent)',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                              <polyline points="14 2 14 8 20 8"/>
+                              <line x1="16" y1="13" x2="8" y2="13"/>
+                              <line x1="16" y1="17" x2="8" y2="17"/>
+                            </svg>
+                          </button>
+
                           {/* Timeline */}
                           <button
                             onClick={() => setTimelineFile(f)}
@@ -1078,6 +1411,37 @@ export default function Files({ onNavigate, walletAddress }) {
                               : <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                             }
                           </motion.button>
+
+                          {/* Access Control */}
+                          <button
+                            onClick={() => setAccessFile(f)}
+                            title="Access Control"
+                            style={{
+                              width: 28, height: 28, borderRadius: 6,
+                              border: `0.5px solid ${
+                                f.visibility === 'public' ? 'rgba(0,255,157,0.4)'
+                                : f.visibility === 'shared' ? 'rgba(0,212,255,0.4)'
+                                : 'rgba(127,119,221,0.4)'
+                              }`,
+                              background: 'transparent',
+                              color: f.visibility === 'public' ? 'var(--green)'
+                                : f.visibility === 'shared' ? 'var(--accent)'
+                                : '#7F77DD',
+                              cursor: 'pointer',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            }}>
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              {f.visibility === 'public' ? (
+                                <><circle cx="12" cy="12" r="10"/>
+                                <line x1="2" y1="12" x2="22" y2="12"/>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>
+                              ) : (
+                                <><rect x="3" y="11" width="18" height="11" rx="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/></>
+                              )}
+                            </svg>
+                          </button>
 
                           {/* Share */}
                           <button
@@ -1230,6 +1594,19 @@ export default function Files({ onNavigate, walletAddress }) {
         file={previewFile}
         onClose={() => setPreviewFile(null)}
       />
+
+      {/* Access Control Modal */}
+      {accessFile && (
+        <AccessControlModal
+          file={accessFile}
+          onClose={() => setAccessFile(null)}
+          onSuccess={(msg) => {
+            setAccessFile(null);
+            fetchFiles();
+            alert(msg);
+          }}
+        />
+      )}
 
       {/* Version Modal */}
       {versionFile && (
@@ -1390,6 +1767,18 @@ export default function Files({ onNavigate, walletAddress }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* File Details Modal */}
+      {detailFile && (
+        <FileDetailsModal
+          file={detailFile}
+          onClose={() => setDetailFile(null)}
+          onCertificate={(f) => {
+            generateCertificate(f);
+            setDetailFile(null);
+          }}
+        />
       )}
 
     </motion.div>

@@ -137,3 +137,46 @@ func GetStats(c *gin.Context) {
 		},
 	})
 }
+
+// UpdateVisibility — file visibility change karo
+func UpdateVisibility(c *gin.Context) {
+	fileID := c.Param("id")
+
+	var body struct {
+		Visibility string   `json:"visibility"`
+		SharedWith []string `json:"sharedWith"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	if body.Visibility != "private" && body.Visibility != "public" && body.Visibility != "shared" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid visibility — use private/public/shared"})
+		return
+	}
+
+	collection := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	update := bson.M{
+		"$set": bson.M{
+			"visibility": body.Visibility,
+			"sharedWith": body.SharedWith,
+		},
+	}
+
+	_, err := collection.UpdateOne(ctx, bson.M{"fileId": fileID}, update)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Update failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":    true,
+		"fileId":     fileID,
+		"visibility": body.Visibility,
+		"sharedWith": body.SharedWith,
+	})
+}

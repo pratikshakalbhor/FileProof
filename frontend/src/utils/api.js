@@ -152,6 +152,15 @@ export const publicVerifyFile = async (file, publicId) => {
 };
 
 // ─────────────────────────────────────────
+// Access Control API
+export const updateVisibility = async (fileId, visibility, sharedWith = []) => {
+  return apiFetch(`/files/${fileId}/visibility`, {
+    method: 'PUT',
+    body: JSON.stringify({ visibility, sharedWith }),
+  });
+};
+
+// ─────────────────────────────────────────
 // 6. GET STATS
 // GET /api/stats
 // ─────────────────────────────────────────

@@ -29,6 +29,8 @@ type FileRecord struct {
 	VerifiedAt    *time.Time      `json:"verifiedAt"    bson:"verifiedAt"`
 	Version       int             `json:"version"       bson:"version"`
 	Versions      []VersionRecord `json:"versions"      bson:"versions"` // Audit Trail sathi
+	Visibility    string          `json:"visibility"    bson:"visibility"`    // private, public, shared
+	SharedWith    []string        `json:"sharedWith"    bson:"sharedWith"`    // wallet addresses
 }
 
 // Stats — Dashboard sathi
