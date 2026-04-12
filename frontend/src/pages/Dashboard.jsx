@@ -1,17 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import '../styles/Dashboard.css';
-import StatusBadge from '../components/StatusBadge';
-import { pageVariants, cardVariants, tableRow, fadeIn } from '../utils/animations';
+import { pageVariants, cardVariants, fadeIn } from '../utils/animations';
 import { getAllFiles, getStats } from '../utils/api';
-import { getTxUrl } from '../utils/blockchain';
 
 export default function Dashboard({ onNavigate, walletAddress }) {
   const [files, setFiles] = useState([]);
   const [stats, setStats] = useState({ total: 0, valid: 0, tampered: 0, revoked: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+  const [storageData, setStorageData] = useState({ used: 0, total: 10240, count: 0 });
   const [qvLoading, setQvLoading] = useState(false);
   const [qvResult, setQvResult]   = useState(null);
 
@@ -43,6 +41,15 @@ export default function Dashboard({ onNavigate, walletAddress }) {
       ]);
       setFiles(filesRes.files || []);
       setStats(statsRes.stats || { total: 0, valid: 0, tampered: 0, revoked: 0 });
+
+      // Storage calculate karo
+      const totalBytes = (filesRes.files || []).reduce((sum, f) => sum + (f.fileSize || 0), 0);
+      const usedMB = (totalBytes / (1024 * 1024)).toFixed(2);
+      setStorageData({
+        used: parseFloat(usedMB),
+        total: 10240, // 10 GB limit
+        count: (filesRes.files || []).length,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -200,6 +207,289 @@ export default function Dashboard({ onNavigate, walletAddress }) {
         <motion.button className="btn btn-outline" whileHover={{ y: -2 }} onClick={fetchData}>
           ↺ Refresh
         </motion.button>
+      </motion.div>
+
+      {/* ── Storage Usage ── */}
+      <motion.div className="section-card" variants={cardVariants}
+        initial="initial" animate="animate"
+        style={{ marginBottom: 16 }}>
+
+        <div className="files-header" style={{ marginBottom: 16 }}>
+          <span className="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round" style={{ marginRight: 8, verticalAlign: 'middle' }}>
+              <ellipse cx="12" cy="5" rx="9" ry="3"/>
+              <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+              <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+            </svg>
+            Storage Usage
+          </span>
+          <span style={{
+            fontSize: 11, fontFamily: 'var(--font-mono)',
+            color: 'var(--muted)',
+          }}>
+            {storageData.count} files sealed
+          </span>
+        </div>
+
+        {/* Usage bar */}
+        <div style={{ marginBottom: 10 }}>
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 12, marginBottom: 8,
+          }}>
+            <span style={{ color: 'var(--text)', fontWeight: 600 }}>
+              {storageData.used} MB used
+            </span>
+            <span style={{ color: 'var(--muted)' }}>
+              {storageData.total} MB total
+            </span>
+          </div>
+
+          {/* Progress bar */}
+          <div style={{
+            height: 8, background: 'rgba(255,255,255,0.07)',
+            borderRadius: 20, overflow: 'hidden',
+          }}>
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${Math.min((storageData.used / storageData.total) * 100, 100).toFixed(1)}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              style={{
+                height: '100%', borderRadius: 20,
+                background: storageData.used / storageData.total > 0.8
+                  ? 'var(--red)'
+                  : storageData.used / storageData.total > 0.5
+                  ? '#EF9F27'
+                  : 'var(--accent)',
+              }}
+            />
+          </div>
+
+          <div style={{
+            display: 'flex', justifyContent: 'space-between',
+            fontSize: 10, color: 'var(--muted)', marginTop: 6,
+            fontFamily: 'var(--font-mono)',
+          }}>
+            <span>
+              {((storageData.used / storageData.total) * 100).toFixed(1)}% used
+            </span>
+            <span>
+              {(storageData.total - storageData.used).toFixed(2)} MB free
+            </span>
+          </div>
+        </div>
+
+        {/* Storage breakdown */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 8, marginTop: 12,
+        }}>
+          {[
+            { label: 'Used',  value: `${storageData.used} MB`,
+              color: 'var(--accent)', bg: 'rgba(0,212,255,0.06)' },
+            { label: 'Free',  value: `${(storageData.total - storageData.used).toFixed(0)} MB`,
+              color: 'var(--green)', bg: 'rgba(0,255,157,0.06)' },
+            { label: 'Limit', value: `${(storageData.total / 1024).toFixed(0)} GB`,
+              color: 'var(--muted)', bg: 'rgba(255,255,255,0.03)' },
+          ].map((item, i) => (
+            <div key={i} style={{
+              padding: '10px 12px', borderRadius: 8, textAlign: 'center',
+              background: item.bg,
+              border: '1px solid var(--border)',
+            }}>
+              <div style={{
+                fontSize: 14, fontWeight: 700,
+                color: item.color, fontFamily: 'var(--font-mono)',
+                marginBottom: 3,
+              }}>
+                {item.value}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--muted)' }}>
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Warning */}
+        {storageData.used / storageData.total > 0.8 && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+            style={{
+              marginTop: 12, padding: '8px 12px', borderRadius: 8,
+              background: 'rgba(255,59,92,0.08)',
+              border: '1px solid rgba(255,59,92,0.25)',
+              fontSize: 12, color: 'var(--red)',
+              display: 'flex', alignItems: 'center', gap: 6,
+            }}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            Storage almost full — consider removing old files
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* ── Recent Files Section ── */}
+      <motion.div className="files-section" variants={cardVariants}
+        initial="initial" animate="animate"
+        style={{ marginBottom: 16 }}>
+
+        <div className="files-header">
+          <span className="section-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+              stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round"
+              strokeLinejoin="round" style={{ marginRight: 8, verticalAlign: 'middle' }}>
+              <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+              <polyline points="13 2 13 9 20 9"/>
+            </svg>
+            Recent Files
+          </span>
+          <motion.button className="btn btn-outline sm"
+            whileHover={{ x: 3 }}
+            onClick={() => onNavigate('files')}>
+            View All →
+          </motion.button>
+        </div>
+
+        {files.length === 0 ? (
+          <motion.div variants={fadeIn} initial="initial" animate="animate"
+            style={{ textAlign: 'center', padding: '32px 24px' }}>
+            <motion.div
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+              style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }}>
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none"
+                stroke="var(--muted)" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+              </svg>
+            </motion.div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 6 }}>
+              No files yet
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>
+              Upload your first file to get started
+            </div>
+            <motion.button className="btn btn-primary sm"
+              whileHover={{ scale: 1.04 }}
+              onClick={() => onNavigate('upload')}>
+              Upload First File
+            </motion.button>
+          </motion.div>
+        ) : (
+          <div>
+            {files.slice(0, 5).map((f, i) => {
+              const isExpired = f.expiryDate && new Date(f.expiryDate) < new Date();
+              const ext = f.filename?.split('.').pop()?.toUpperCase();
+              return (
+                <motion.div key={f.fileId || i}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  style={{
+                    display: 'flex', alignItems: 'center',
+                    gap: 12, padding: '10px 0',
+                    borderBottom: i < Math.min(files.length, 5) - 1
+                      ? '1px solid var(--border)' : 'none',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => onNavigate('files')}
+                  whileHover={{ x: 4 }}
+                >
+                  {/* File type badge */}
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                    background: 'rgba(0,212,255,0.06)',
+                    border: '1px solid rgba(0,212,255,0.15)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 9, fontWeight: 700, color: 'var(--accent)',
+                    fontFamily: 'var(--font-mono)',
+                  }}>
+                    {ext}
+                  </div>
+
+                  {/* File info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      fontSize: 13, fontWeight: 600, color: 'var(--text)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      marginBottom: 3,
+                    }}>
+                      {f.filename}
+                    </div>
+                    <div style={{
+                      display: 'flex', gap: 10, fontSize: 10,
+                      color: 'var(--muted)', fontFamily: 'var(--font-mono)',
+                    }}>
+                      <span>{Math.round((f.fileSize || 0) / 1024)} KB</span>
+                      <span>·</span>
+                      <span>{new Date(f.uploadedAt).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short',
+                      })}</span>
+                      {f.txHash && f.txHash !== 'pending' && (
+                        <>
+                          <span>·</span>
+                          <span style={{ color: 'var(--accent)' }}>
+                            TX: {f.txHash.slice(0, 8)}...
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <span style={{
+                    fontSize: 10, padding: '3px 10px', borderRadius: 20,
+                    fontWeight: 600, flexShrink: 0,
+                    background: isExpired
+                      ? 'rgba(239,159,39,0.1)'
+                      : f.status === 'valid'
+                      ? 'rgba(0,255,157,0.08)'
+                      : f.status === 'tampered'
+                      ? 'rgba(255,59,92,0.08)'
+                      : 'rgba(127,119,221,0.08)',
+                    border: `1px solid ${isExpired
+                      ? 'rgba(239,159,39,0.25)'
+                      : f.status === 'valid'
+                      ? 'rgba(0,255,157,0.2)'
+                      : f.status === 'tampered'
+                      ? 'rgba(255,59,92,0.2)'
+                      : 'rgba(127,119,221,0.2)'}`,
+                    color: isExpired ? '#EF9F27'
+                      : f.status === 'valid' ? 'var(--green)'
+                      : f.status === 'tampered' ? 'var(--red)'
+                      : '#7F77DD',
+                  }}>
+                    {isExpired ? 'Expired' : f.status?.toUpperCase()}
+                  </span>
+                </motion.div>
+              );
+            })}
+
+            {/* View more */}
+            {files.length > 5 && (
+              <div style={{
+                textAlign: 'center', paddingTop: 12,
+                fontSize: 12, color: 'var(--muted)',
+              }}>
+                +{files.length - 5} more files ·{' '}
+                <button
+                  onClick={() => onNavigate('files')}
+                  style={{
+                    background: 'none', border: 'none',
+                    color: 'var(--accent)', cursor: 'pointer', fontSize: 12,
+                  }}>
+                  View all →
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </motion.div>
 
       {/* ── Quick Verify ── */}
@@ -384,68 +674,6 @@ export default function Dashboard({ onNavigate, walletAddress }) {
         </div>
       </motion.div>
 
-      {/* Recent Files */}
-      <motion.div className="files-section" variants={cardVariants} initial="initial" animate="animate">
-        <div className="files-header">
-          <span className="section-title">Recent Activity</span>
-          <motion.button className="btn btn-outline sm" whileHover={{ x: 3 }} onClick={() => onNavigate('files')}>
-            View All →
-          </motion.button>
-        </div>
-
-        {files.length === 0 ? (
-          <motion.div variants={fadeIn} initial="initial" animate="animate"
-            style={{ textAlign: 'center', padding: '48px 24px' }}>
-            <motion.div style={{ marginBottom: 12, display:'flex', justifyContent:'center' }}
-              animate={{ y: [0, -8, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--muted)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-            </motion.div>
-            <div style={{ fontWeight: 700, marginBottom: 6, color: 'var(--text)' }}>No files uploaded yet</div>
-            <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 16 }}>Upload your first file to get started</div>
-            <motion.button className="btn btn-primary" whileHover={{ scale: 1.04 }} onClick={() => onNavigate('upload')}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{marginRight:6,verticalAlign:'middle'}}><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              Upload First File
-            </motion.button>
-          </motion.div>
-        ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th>File Name</th><th>Size</th><th>SHA-256 Hash</th>
-                <th>TX Hash</th><th>Uploaded</th><th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {files.slice(0, 5).map((f, i) => (
-                <motion.tr key={f.fileId} variants={tableRow} initial="initial" animate="animate"
-                  transition={{ delay: i * 0.05 }}>
-                  <td>
-                    <div className="file-row-name">
-                      <span className={`file-type-badge badge-${f.filename?.split('.').pop()}`}>
-                        {f.filename?.split('.').pop()?.toUpperCase()}
-                      </span>
-                      <span style={{ fontWeight: 600, fontSize: 13 }}>{f.filename}</span>
-                    </div>
-                  </td>
-                  <td><span className="mono-text">{formatSize(f.fileSize)}</span></td>
-                  <td><span className="hash-text">{f.originalHash?.substring(0, 16)}...</span></td>
-                  <td>
-                    {f.txHash && f.txHash !== 'pending' ? (
-                      <a href={getTxUrl(f.txHash)} target="_blank" rel="noreferrer" className="tx-link" style={{ textDecoration: 'none' }}>
-                        {f.txHash.substring(0, 14)}... ↗
-                      </a>
-                    ) : (
-                      <span className="mono-text" style={{ opacity: 0.5 }}>Pending...</span>
-                    )}
-                  </td>
-                  <td><span className="mono-text">{new Date(f.uploadedAt).toLocaleString()}</span></td>
-                  <td><StatusBadge status={f.status} /></td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </motion.div>
 
       {/* Tamper Alert */}
       {stats.tampered > 0 && (
