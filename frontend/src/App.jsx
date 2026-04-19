@@ -19,6 +19,16 @@ export default function App() {
   const [activePage, setActivePage]       = useState('dashboard');
   const [selectedFile, setSelectedFile]   = useState(null);
   const [publicVerifyId, setPublicVerifyId] = useState(null);
+  const [theme, setTheme]                 = useState(localStorage.getItem('theme') || 'dark');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
 
   useEffect(() => {
     if (window.location.pathname.startsWith('/verify-public/')) {
@@ -86,7 +96,7 @@ export default function App() {
     <div className="app">
       <Sidebar activePage={activePage} onNavigate={handleNavigate} walletAddress={walletAddress} onLogout={handleLogout} />
       <div className="main">
-        <Topbar walletAddress={walletAddress} title={getPageTitle(activePage)} />
+        <Topbar walletAddress={walletAddress} title={getPageTitle(activePage)} theme={theme} toggleTheme={toggleTheme} />
         <div className="page">
           {renderPage()}
         </div>

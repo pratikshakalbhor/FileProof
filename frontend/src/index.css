@@ -28,6 +28,25 @@
   --sidebar-w: 240px;
 }
 
+:root[data-theme='light'] {
+  --bg-base:      #f0f4f8;
+  --bg-sidebar:   #ffffff;
+  --bg-card:      #ffffff;
+  --bg-card-hover:#f8f9fa;
+  --bg-input:     #e9ecef;
+  --bg-active:    #e0f7fa;
+  --border:       #dee2e6;
+  --border-light: #ced4da;
+  --accent-cyan:  #00acc1;
+  --accent-teal:  #00897b;
+  --accent-purple:#5e35b1;
+  --accent-red:   #e53935;
+  --accent-orange:#f4511e;
+  --text-primary: #212529;
+  --text-secondary:#495057;
+  --text-muted:   #6c757d;
+}
+
 html, body, #root {
   height: 100%;
   background: var(--bg-base);

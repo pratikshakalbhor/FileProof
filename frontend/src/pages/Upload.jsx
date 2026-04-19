@@ -18,6 +18,7 @@ const fmtSize = b =>
 export default function Upload({ walletAddress, onNavigate }) {
   const [phase, setPhase] = useState('idle');     // idle | uploading | done
   const [file, setFile]   = useState(null);
+  const [expiryDate, setExpiryDate] = useState('');
   const [drag, setDrag]   = useState(false);
   const [stepsDone, setStepsDone] = useState([]);
   const [activeStep, setActiveStep] = useState(null);
@@ -76,7 +77,8 @@ export default function Upload({ walletAddress, onNavigate }) {
 
       // --- 1. Call Backend API (Generate hash, encrypt, MongoDB, etc) ---
       console.log("Sending file to backend...");
-      const data = await uploadFile(file, walletAddress || '');
+      const formattedExpiry = expiryDate ? new Date(expiryDate).toISOString() : null;
+      const data = await uploadFile(file, walletAddress || '', formattedExpiry);
       console.log("Backend response received:", data);
       
       const file_ = data.file || data;
@@ -116,7 +118,7 @@ export default function Upload({ walletAddress, onNavigate }) {
   };
 
   const reset = () => {
-    setPhase('idle'); setFile(null); setStepsDone([]);
+    setPhase('idle'); setFile(null); setExpiryDate(''); setStepsDone([]);
     setActiveStep(null); setProgress(0); setResult(null); setError('');
   };
 
@@ -197,6 +199,13 @@ export default function Upload({ walletAddress, onNavigate }) {
                   </span>
                 </DetailRow>
               ) : null}
+              {(file_.expiresAt || file_.expiryDate) && (
+                <DetailRow label="Expiry Date">
+                  <span style={{ fontSize: 10, color: 'var(--accent-orange)' }}>
+                    {new Date(file_.expiresAt || file_.expiryDate).toLocaleString()}
+                  </span>
+                </DetailRow>
+              )}
             </div>
           </div>
           
@@ -249,22 +258,37 @@ export default function Upload({ walletAddress, onNavigate }) {
       </div>
 
       {file && (
-        <div className="card" style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <span style={{ fontSize: 20 }}>📄</span>
-            <div>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{file.name}</div>
-              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
-                {fmtSize(file.size)} · {file.type || 'unknown'}
+        <>
+          <div className="card" style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
+              <span style={{ fontSize: 20 }}>📄</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600 }}>{file.name}</div>
+                <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
+                  {fmtSize(file.size)} · {file.type || 'unknown'}
+                </div>
               </div>
             </div>
+            <button
+              className="btn btn-g"
+              style={{ padding: '3px 9px', fontSize: 11 }}
+              onClick={() => { setFile(null); setExpiryDate(''); }}
+            >✕</button>
           </div>
-          <button
-            className="btn btn-g"
-            style={{ padding: '3px 9px', fontSize: 11 }}
-            onClick={() => setFile(null)}
-          >✕</button>
-        </div>
+
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>
+              Expiry Date (Optional)
+            </label>
+            <input 
+              type="datetime-local" 
+              className="search-bar input" 
+              style={{ width: '100%', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 'var(--r-md)', padding: '9px 13px', color: 'var(--text-primary)', fontFamily: 'var(--font-main)', margin: 0 }}
+              value={expiryDate}
+              onChange={(e) => setExpiryDate(e.target.value)}
+            />
+          </div>
+        </>
       )}
 
       <div className="sec-info">
