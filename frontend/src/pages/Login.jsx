@@ -2,11 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import '../styles/Login.css';
 import { scalePop, cardVariants, staggerContainer, fadeIn } from '../utils/animations';
+import { CheckCircle, ShieldCheck, Lock, AlertTriangle } from 'lucide-react';
 
 const WALLETS = [
   {
     id: 'metamask',
-    name: 'MetaMask',
+    name: 'Connect with MetaMask',
     desc: 'Connect using browser extension',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -14,30 +15,7 @@ const WALLETS = [
       </svg>
     ),
     popular: true,
-  },
-  {
-    id: 'coinbase',
-    name: 'Coinbase Wallet',
-    desc: 'Connect using Coinbase Wallet',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/>
-      </svg>
-    ),
-    popular: false,
-  },
-  {
-    id: 'walletconnect',
-    name: 'WalletConnect',
-    desc: 'Scan QR with any wallet',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-      </svg>
-    ),
-    popular: false,
-  },
+  }
 ];
 
 export default function Login({ onConnected }) {
@@ -56,7 +34,11 @@ export default function Login({ onConnected }) {
 
     try {
       if (!window.ethereum) {
-        throw new Error('MetaMask not installed! Please install MetaMask extension.');
+        window.alert('MetaMask not found');
+        window.open('https://metamask.io/download/', '_blank');
+        setIsConnecting(false);
+        setStatus('idle');
+        return;
       }
 
       try {
@@ -89,9 +71,11 @@ export default function Login({ onConnected }) {
         }
       }
 
-      setAddress(accounts[0]);
+      const walletAddr = accounts[0];
+      localStorage.setItem('wallet', walletAddr);
+      setAddress(walletAddr);
       setStatus('connected');
-      setTimeout(() => onConnected(accounts[0]), 1500);
+      setTimeout(() => onConnected(walletAddr), 1500);
     } catch (err) {
       if (err.code === 4001) {
         setError('Connection rejected. Please approve in MetaMask.');
@@ -107,11 +91,7 @@ export default function Login({ onConnected }) {
   };
 
   const connectOther = async (name) => {
-    setStatus('connecting');
-    setConnectingWallet(name);
-    await new Promise(r => setTimeout(r, 1500));
-    setError(`${name} coming soon! Please use MetaMask.`);
-    setStatus('error');
+    // Keep empty as there are no other wallets
   };
 
   const reset = () => { setStatus('idle'); setError(''); };
@@ -139,7 +119,7 @@ export default function Login({ onConnected }) {
             whileHover={{ rotate: [0, -10, 10, 0], scale: 1.1 }}
             transition={{ duration: 0.4 }}
           >
-            🛡️
+            <ShieldCheck size={28} />
           </motion.div>
           <div>
             <div className="login-logo-text">BlockVerify</div>
@@ -152,9 +132,9 @@ export default function Login({ onConnected }) {
           {/* ── IDLE ── */}
           {status === 'idle' && (
             <motion.div key="idle" variants={fadeIn} initial="initial" animate="animate" exit={{ opacity: 0, y: -10 }}>
-              <div className="login-heading">Connect Your Wallet</div>
+              <div className="login-heading">Connect Wallet</div>
               <div className="login-subheading">
-                Connect your Web3 wallet to access BlockVerify. Your files stay encrypted and secure on blockchain.
+                Connect your wallet to securely use blockchain features
               </div>
 
               <motion.div className="wallet-options" variants={staggerContainer} initial="initial" animate="animate">
@@ -187,7 +167,7 @@ export default function Login({ onConnected }) {
                   <div className="login-divider-line" />
                 </div>
                 <div className="security-info">
-                  <span className="security-info-icon">🔒</span>
+                  <span className="security-info-icon"><Lock size={16} /></span>
                   <span className="security-info-text">
                     <strong>Non-custodial</strong> — We never store your private keys.{' '}
                     <strong>AES-256</strong> + <strong>Ethereum</strong> blockchain.
@@ -218,7 +198,7 @@ export default function Login({ onConnected }) {
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-              >✓</motion.div>
+              ><CheckCircle size={48} /></motion.div>
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                 <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--accent-teal)', marginBottom: 8 }}>Connected!</div>
                 <div className="connected-address">{address.slice(0, 6)}...{address.slice(-4)}</div>
@@ -242,7 +222,7 @@ export default function Login({ onConnected }) {
                   fontFamily: 'var(--font-mono)', lineHeight: 1.6,
                 }}
               >
-                ⚠️ {error}
+                <AlertTriangle size={14} style={{ marginRight: 6, verticalAlign: 'text-bottom' }} /> {error}
               </motion.div>
               {error.includes('not installed') && (
                 <a

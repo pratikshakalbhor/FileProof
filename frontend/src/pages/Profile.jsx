@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { getAllFiles, getStats } from '../utils/api';
 import '../styles/Profile.css';
 import { cardVariants, staggerContainer } from '../utils/animations';
+import { AlertTriangle, BarChart2, CheckCircle, Clipboard, LogOut, RefreshCw, Settings, ShieldCheck, Trash2, User } from 'lucide-react';
+
 
 export default function Profile({ walletAddress, onLogout }) {
   const [stats, setStats] = useState({ total: 0, valid: 0, tampered: 0 });
@@ -75,17 +77,17 @@ export default function Profile({ walletAddress, onLogout }) {
           <h1>User Profile</h1>
           <p>Manage your account settings and view security statistics</p>
         </div>
-        <button className="ref-btn" onClick={fetchProfileData}>⟳ Refresh</button>
+        <button className="ref-btn" onClick={fetchProfileData}><RefreshCw size={18} /> Refresh</button>
       </div>
 
-      {error && <div className="error-box">⚠️ {error}</div>}
+      {error && <div className="error-box"><AlertTriangle size={18} /> {error}</div>}
 
       <motion.div className="profile-grid" variants={staggerContainer} initial="initial" animate="animate">
         
         {/* 1. User Info Card */}
         <motion.div className="profile-card" variants={cardVariants}>
           <div className="profile-card-header">
-            <div className="profile-card-icon">👤</div>
+            <div className="profile-card-icon"><User size={18} /></div>
             <div className="profile-card-title">Account Information</div>
           </div>
           
@@ -94,7 +96,7 @@ export default function Profile({ walletAddress, onLogout }) {
             <span className="profile-info-value">
               <span className="profile-mono" title={walletAddress}>{shortAddr}</span>
               <button className="copy-icon-btn" onClick={handleCopy} title="Copy Address">
-                {copied ? '✓' : '📋'}
+                {copied ? <CheckCircle size={18} /> : <Clipboard size={18} />}
               </button>
             </span>
           </div>
@@ -109,7 +111,7 @@ export default function Profile({ walletAddress, onLogout }) {
           <div className="profile-info-row">
             <span className="profile-info-label">Account Status</span>
             <span className="profile-info-value" style={{ color: 'var(--accent-teal)' }}>
-              ✅ Active
+              <CheckCircle size={18} /> Active
             </span>
           </div>
         </motion.div>
@@ -117,7 +119,7 @@ export default function Profile({ walletAddress, onLogout }) {
         {/* 2. Stats Card */}
         <motion.div className="profile-card" variants={cardVariants}>
           <div className="profile-card-header">
-            <div className="profile-card-icon">📊</div>
+            <div className="profile-card-icon"><BarChart2 size={18} /></div>
             <div className="profile-card-title">Storage Statistics</div>
           </div>
           
@@ -140,7 +142,7 @@ export default function Profile({ walletAddress, onLogout }) {
         {/* 3. Security Section */}
         <motion.div className="profile-card" variants={cardVariants}>
           <div className="profile-card-header">
-            <div className="profile-card-icon">🛡️</div>
+            <div className="profile-card-icon"><ShieldCheck size={18} /></div>
             <div className="profile-card-title">Security & Activity</div>
           </div>
           
@@ -165,7 +167,7 @@ export default function Profile({ walletAddress, onLogout }) {
         {/* 4. Settings Section */}
         <motion.div className="profile-card" variants={cardVariants}>
           <div className="profile-card-header">
-            <div className="profile-card-icon">⚙️</div>
+            <div className="profile-card-icon"><Settings size={18} /></div>
             <div className="profile-card-title">Preferences</div>
           </div>
           
@@ -176,10 +178,10 @@ export default function Profile({ walletAddress, onLogout }) {
           
           <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }}>
             <button className="profile-btn" onClick={() => alert('Local cache cleared!')}>
-              🧹 Clear Local Data
+              <Trash2 size={18} /> Clear Local Data
             </button>
             <button className="profile-btn danger" onClick={onLogout}>
-              🚪 Disconnect Wallet
+              <LogOut size={18} /> Disconnect Wallet
             </button>
           </div>
         </motion.div>

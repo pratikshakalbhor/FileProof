@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { publicVerifyFile, downloadCertificate } from '../utils/api';
+import { Activity, AlertTriangle, Award, CheckCircle, FileText, Link } from 'lucide-react';
+
 
 export default function PublicVerify({ publicId }) {
   const [data, setData] = useState(null);
@@ -18,7 +20,7 @@ export default function PublicVerify({ publicId }) {
   }, [publicId]);
 
   if (loading) return <div className="page-inner"><div className="loading-center"><div className="spin-ring" />Verifying authenticity...</div></div>;
-  if (error) return <div className="page-inner"><div className="error-box">⚠️ {error}</div></div>;
+  if (error) return <div className="page-inner"><div className="error-box"><AlertTriangle size={18} /> {error}</div></div>;
   if (!data) return <div className="page-inner"><div className="empty">No record found.</div></div>;
 
   const isValid = data.status === 'valid';
@@ -34,7 +36,7 @@ export default function PublicVerify({ publicId }) {
       </div>
 
       <div className={`vr ${isValid ? 'valid' : isTampered ? 'tampered' : ''}`} style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div className="vr-ico">{isValid ? '✅' : isTampered ? '❌' : '⏳'}</div>
+        <div className="vr-ico">{isValid ? <CheckCircle size={18} /> : isTampered ? <AlertTriangle size={18} /> : <Activity size={18} />}</div>
         <h2>{isValid ? 'Authentic Record Verified' : isTampered ? 'Warning: Tampered Record' : 'Verification Status Pending'}</h2>
         <p style={{ marginTop: 5, fontSize: 13 }}>
           {isValid
@@ -47,7 +49,7 @@ export default function PublicVerify({ publicId }) {
 
       <div className="card">
          <h3 style={{ fontSize: 12, fontWeight: 600, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 6 }}>
-           <span>📄</span> Document Details
+           <span><FileText size={18} /></span> Document Details
          </h3>
          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: 8}}>
@@ -66,7 +68,7 @@ export default function PublicVerify({ publicId }) {
       </div>
 
       <div className="ig" style={{ marginTop: 20 }}>
-        <div className="ig-hdr"><span>🔗</span><h3>Blockchain Information</h3></div>
+        <div className="ig-hdr"><span><Link size={18} /></span><h3>Blockchain Information</h3></div>
         <div className="ig-row">
           <span className="ig-lbl">Transaction Hash</span>
           {data.txHash ? (
@@ -91,7 +93,7 @@ export default function PublicVerify({ publicId }) {
              setCertLoading(true);
              downloadCertificate(data.fileId).finally(() => setCertLoading(false));
          }} disabled={certLoading || !isValid} style={{ flex: 1 }}>
-            {certLoading ? 'Generating PDF...' : '🏅 Download Proof Certificate'}
+            {certLoading ? 'Generating PDF...' : <><Award size={18} /> Download Proof Certificate</>}
          </button>
       </div>
 

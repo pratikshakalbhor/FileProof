@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { verifyFile } from '../utils/api';
+import { AlertTriangle, CheckCircle, Clipboard, FileText, RefreshCw, Search, X } from 'lucide-react';
+
 
 export default function Verify({ walletAddress }) {
   const [file, setFile]     = useState(null);
@@ -75,7 +77,7 @@ export default function Verify({ walletAddress }) {
       </div>
 
       {error && (
-        <div className="error-box" style={{ marginBottom: 14 }}>⚠️ {error}</div>
+        <div className="error-box" style={{ marginBottom: 14 }}><AlertTriangle size={18} /> {error}</div>
       )}
 
       {!result && (
@@ -91,7 +93,7 @@ export default function Verify({ walletAddress }) {
               id="vf-input" type="file" style={{ display: 'none' }}
               onChange={handleSelect}
             />
-            <div className="dz-ico">🔍</div>
+            <div className="dz-ico"><Search size={18} /></div>
             <h3>Drop the file you want to verify</h3>
             <p>We'll compute its hash and compare it with the blockchain record</p>
           </div>
@@ -99,13 +101,13 @@ export default function Verify({ walletAddress }) {
           {file && (
             <div className="card" style={{ marginTop: 11, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{ fontSize: 19 }}>📄</span>
+                <span style={{ fontSize: 19 }}><FileText size={18} /></span>
                 <div>
                   <div style={{ fontSize: 12, fontWeight: 600 }}>{file.name}</div>
                   <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>{file.type || 'unknown'}</div>
                 </div>
               </div>
-              <button className="btn btn-g" style={{ padding: '3px 9px', fontSize: 11 }} onClick={() => setFile(null)}>✕</button>
+              <button className="btn btn-g" style={{ padding: '3px 9px', fontSize: 11 }} onClick={() => setFile(null)}><X size={18} /></button>
             </div>
           )}
 
@@ -115,7 +117,7 @@ export default function Verify({ walletAddress }) {
             disabled={!file || loading}
             onClick={doVerify}
           >
-            {loading ? '⟳ Verifying...' : '🔍 Verify Integrity'}
+            {loading ? <><RefreshCw size={18} /> Verifying...</> : <><Search size={18} /> Verify Integrity</>}
           </button>
         </>
       )}
@@ -123,7 +125,7 @@ export default function Verify({ walletAddress }) {
       {result && status && (
         <>
           <div className={`vr ${isValid ? 'valid' : 'tampered'}`} style={{ textAlign: 'center' }}>
-            <div className="vr-ico">{isValid ? '✅' : '❌'}</div>
+            <div className="vr-ico">{isValid ? <CheckCircle size={18} /> : <AlertTriangle size={18} />}</div>
             <h2>{isValid ? 'VALID — File is intact' : 'TAMPERED — File has been modified'}</h2>
             <p style={{ marginTop: 5 }}>
               {isValid
@@ -134,7 +136,7 @@ export default function Verify({ walletAddress }) {
 
           {isValid && fileRecord && (
             <div className="ig" style={{ marginTop: 13 }}>
-              <div className="ig-hdr"><span>📋</span><h3>Verification Details</h3></div>
+              <div className="ig-hdr"><span><Clipboard size={18} /></span><h3>Verification Details</h3></div>
               {(fileRecord.hash || fileRecord.fileHash) && (
                 <div className="ig-row">
                   <span className="ig-lbl">SHA-256 Hash</span>
@@ -175,7 +177,7 @@ export default function Verify({ walletAddress }) {
               )}
               <div className="ig-row">
                 <span className="ig-lbl">Blockchain</span>
-                <span className="ig-val" style={{ color: 'var(--accent-teal)' }}>✅ Confirmed on Sepolia</span>
+                <span className="ig-val" style={{ color: 'var(--accent-teal)' }}><CheckCircle size={18} /> Confirmed on Sepolia</span>
               </div>
             </div>
           )}

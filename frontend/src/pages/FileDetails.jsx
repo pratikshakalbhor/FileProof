@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { downloadCertificate, getFileVersions } from '../utils/api';
+import { Activity, AlertTriangle, Award, CheckCircle, Clock, DownloadCloud, FileText, Link, Search, Share2 } from 'lucide-react';
+
 
 const fmtSize = b =>
   !b ? '—' : b < 1024 ? b + ' B' : b < 1048576
@@ -81,13 +83,13 @@ export default function FileDetails({ file, onNavigate }) {
 
       {isExpired && (
         <div className="error-box" style={{ marginBottom: 15, background: 'rgba(239, 68, 68, 0.1)', color: '#fca5a5', border: '1px solid rgba(239, 68, 68, 0.2)' }}>
-          ⚠️ This file's verification lifespan expired on {new Date(file.expiryDate).toLocaleString()}
+          <AlertTriangle size={18} /> This file's verification lifespan expired on {new Date(file.expiryDate).toLocaleString()}
         </div>
       )}
 
       {/* Large Status Badge */}
       <div className={`vr ${isValid ? 'valid' : isTampered ? 'tampered' : ''}`} style={{ textAlign: 'center', marginBottom: 20 }}>
-        <div className="vr-ico">{isValid ? '✅' : isTampered ? '❌' : '⏳'}</div>
+        <div className="vr-ico">{isValid ? <CheckCircle size={18} /> : isTampered ? <AlertTriangle size={18} /> : <Activity size={18} />}</div>
         <h2>{isValid ? 'This file is authentic' : isTampered ? 'This file is tampered!' : 'Verification Pending'}</h2>
         <p style={{ marginTop: 5, fontSize: 13 }}>
           {isValid
@@ -109,7 +111,7 @@ export default function FileDetails({ file, onNavigate }) {
               <embed src={cloudURL} type="application/pdf" width="100%" height="350px" style={{ borderRadius: 8, border: '1px solid rgba(255,255,255,0.1)' }} />
             ) : (
               <div style={{ textAlign: 'center' }}>
-                <div className="preview-icon">📄</div>
+                <div className="preview-icon"><FileText size={18} /></div>
               </div>
             )}
             <div style={{ marginTop: 12, textAlign: 'center', fontSize: 13, fontWeight: 600 }}>{name}</div>
@@ -120,24 +122,24 @@ export default function FileDetails({ file, onNavigate }) {
           <div className="det-acts" style={{ justifyContent: 'center' }}>
              {cloudURL && (
               <a href={cloudURL} download={name} className="btn btn-teal">
-                ⬇️ Download Original File
+                <DownloadCloud size={18} /> Download Original File
               </a>
             )}
             <button className="btn btn-pu" onClick={handleCert} disabled={certLoading || !isValid}>
-              {certLoading ? 'Generating...' : '🏅 Download Proof Certificate'}
+              {certLoading ? 'Generating...' : <><Award size={18} /> Download Proof Certificate</>}
             </button>
           </div>
 
           <div className="btn-row" style={{ justifyContent: 'center', marginTop: 5 }}>
-            <button className="btn btn-g" onClick={handleNativeShare}>📤 Share</button>
-            <button className="btn btn-g" onClick={handleCopy}>🔗 {copied ? 'Copied Link!' : 'Copy Verification Link'}</button>
+            <button className="btn btn-g" onClick={handleNativeShare}><Share2 size={18} /> Share</button>
+            <button className="btn btn-g" onClick={handleCopy}><Link size={18} /> {copied ? 'Copied Link!' : 'Copy Verification Link'}</button>
           </div>
 
         </div>
       </div>
 
       <div className="ig">
-        <div className="ig-hdr"><span>🔗</span><h3>Blockchain Information</h3></div>
+        <div className="ig-hdr"><span><Link size={18} /></span><h3>Blockchain Information</h3></div>
         <div className="ig-row">
           <span className="ig-lbl">TX Hash</span>
           {txHash ? (
@@ -163,7 +165,7 @@ export default function FileDetails({ file, onNavigate }) {
 
       {versions?.length > 0 && (
         <div className="card" style={{ marginTop: 20 }}>
-          <h3 className="sec-title" style={{ marginBottom: 15 }}>🕒 Version History</h3>
+          <h3 className="sec-title" style={{ marginBottom: 15 }}><Clock size={18} /> Version History</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {versions.map((v, i) => (
               <div key={i} style={{ padding: 12, background: 'rgba(255,255,255,0.02)', borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -183,7 +185,7 @@ export default function FileDetails({ file, onNavigate }) {
 
       <div className="btn-row" style={{ marginTop: 20 }}>
         <button className="btn btn-s" style={{ flex: 1 }} onClick={() => onNavigate('verify')}>
-          🔍 Verify Another File
+          <Search size={18} /> Verify Another File
         </button>
       </div>
 

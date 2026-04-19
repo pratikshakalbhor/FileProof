@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getAllFiles } from '../utils/api';
 import '../styles/Alerts.css';
 import { cardVariants, staggerContainer, fadeIn } from '../utils/animations';
+import { AlertTriangle, Bell, CheckCircle, RefreshCw, X } from 'lucide-react';
+
 
 export default function Alerts({ walletAddress, onNavigate }) {
   const [alerts, setAlerts] = useState([]);
@@ -111,10 +113,10 @@ export default function Alerts({ walletAddress, onNavigate }) {
   const getIcon = (type) => {
     switch(type) {
       case 'danger': return '🔴';
-      case 'warning': return '⚠️';
+      case 'warning': return <AlertTriangle size={18} />;
       case 'info': return 'ℹ️';
-      case 'success': return '✅';
-      default: return '🔔';
+      case 'success': return <CheckCircle size={18} />;
+      default: return <Bell size={18} />;
     }
   };
 
@@ -136,11 +138,11 @@ export default function Alerts({ walletAddress, onNavigate }) {
           <p>Monitor your file integrity and storage notifications</p>
         </div>
         <button className="ref-btn" onClick={fetchAlerts}>
-          {loading ? '⟳ Refreshing...' : '⟳ Refresh'}
+          {loading ? <><RefreshCw size={18} /> Refreshing...</> : <><RefreshCw size={18} /> Refresh</>}
         </button>
       </div>
 
-      {error && <div className="error-box" style={{ marginBottom: '20px' }}>⚠️ {error}</div>}
+      {error && <div className="error-box" style={{ marginBottom: '20px' }}><AlertTriangle size={18} /> {error}</div>}
 
       <div className="alerts-filter-tabs">
         {['All', 'Critical', 'Warning', 'Info', 'Success'].map(tab => (
@@ -184,7 +186,7 @@ export default function Alerts({ walletAddress, onNavigate }) {
                     </div>
                   </div>
                   <div className="alert-actions">
-                    <button className="alert-dismiss" onClick={() => dismissAlert(alert.id)}>✕</button>
+                    <button className="alert-dismiss" onClick={() => dismissAlert(alert.id)}><X size={18} /></button>
                     {alert.action && (
                       <button className="alert-btn" onClick={alert.action.onClick}>
                         {alert.action.label}

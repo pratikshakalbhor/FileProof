@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { getAllFiles } from '../utils/api';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+
 
 function StatusBadge({ status }) {
   const cls  = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? '✅' : status === 'tampered' ? '❌' : '⏳';
+  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
   return <span className={`badge ${cls}`}>{icon} {status}</span>;
 }
 
@@ -52,19 +54,19 @@ export default function BlockchainLog() {
           <h1>Blockchain Log</h1>
           <p>All transactions recorded on Sepolia Testnet</p>
         </div>
-        <button className="ref-btn" onClick={fetchFiles}>⟳ Refresh</button>
+        <button className="ref-btn" onClick={fetchFiles}><RefreshCw size={18} /> Refresh</button>
       </div>
 
       {/* ── Live block ticker ── */}
       <div className="ticker">
-        <span style={{ fontSize: 14, color: 'var(--accent-cyan)' }}>🛡️</span>
+        <span style={{ fontSize: 14, color: 'var(--accent-cyan)' }}><ShieldCheck size={18} /></span>
         <div className="blks">
           {blocks.map(b => <div key={b} className="blk">{b}</div>)}
         </div>
         <span className="blks-lbl">Live Blocks</span>
       </div>
 
-      {error && <div className="error-box">⚠️ {error}</div>}
+      {error && <div className="error-box"><AlertTriangle size={18} /> {error}</div>}
 
       {/* ── Tabs ── */}
       <div className="log-tabs">

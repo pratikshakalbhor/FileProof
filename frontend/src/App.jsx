@@ -15,7 +15,7 @@ import Profile      from './pages/Profile';
 import PublicVerify from './pages/PublicVerify';
 
 export default function App() {
-  const [walletAddress, setWalletAddress] = useState(null);
+  const [walletAddress, setWalletAddress] = useState(localStorage.getItem('wallet') || null);
   const [activePage, setActivePage]       = useState('dashboard');
   const [selectedFile, setSelectedFile]   = useState(null);
   const [publicVerifyId, setPublicVerifyId] = useState(null);
@@ -43,6 +43,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('wallet');
     setWalletAddress(null);
     setActivePage('dashboard');
   };

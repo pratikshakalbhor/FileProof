@@ -1,6 +1,8 @@
 import { useState, useRef } from 'react';
 import { uploadFile } from '../utils/api';
 import { sealFileOnChain } from '../utils/blockchain';
+import { Activity, AlertTriangle, CheckCircle, Circle, Cloud, FileText, Folder, Link, Lock, RefreshCw, UploadCloud, X } from 'lucide-react';
+
 
 const STEPS = [
   { id: 'hash',    label: 'Generating SHA-256 hash' },
@@ -143,7 +145,7 @@ export default function Upload({ walletAddress, onNavigate }) {
               return (
                 <div key={s.id} className="up-step">
                   <div className={`step-dot ${done ? 'sd-done' : active ? 'sd-act' : 'sd-pend'}`}>
-                     {done ? '✓' : active && s.id === 'chain' ? '🦊' : active ? '⟳' : '○'}
+                     {done ? <CheckCircle size={18} /> : active && s.id === 'chain' ? <Activity size={18} /> : active ? <RefreshCw size={18} /> : <Circle size={18} />}
                   </div>
                   <span style={{
                     color: done ? 'var(--text-primary)' : active ? 'var(--accent-cyan)' : 'var(--text-muted)',
@@ -167,7 +169,7 @@ export default function Upload({ walletAddress, onNavigate }) {
         <div className="ph"><div><h1>Upload File</h1><p>Encrypt, store, and register on the blockchain</p></div></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
           <div className="vr valid" style={{ textAlign: 'center' }}>
-            <div className="vr-ico">✅</div>
+            <div className="vr-ico"><CheckCircle size={18} /></div>
             <h2>File Secured Successfully!</h2>
             <p>Encrypted, stored, and registered on the Sepolia blockchain.</p>
           </div>
@@ -218,7 +220,7 @@ export default function Upload({ walletAddress, onNavigate }) {
                   className="btn btn-purple" 
                   style={{ flex: 1, textAlign: 'center', textDecoration: 'none', justifyContent: 'center' }}
                 >
-                  🔗 View on Etherscan
+                  <Link size={18} /> View on Etherscan
                 </a>
             </div>
           )}
@@ -239,7 +241,7 @@ export default function Upload({ walletAddress, onNavigate }) {
 
       {error && (
         <div className="error-box" style={{ marginBottom: 14 }}>
-          ⚠️ {error}
+          <AlertTriangle size={18} /> {error}
         </div>
       )}
 
@@ -251,7 +253,7 @@ export default function Upload({ walletAddress, onNavigate }) {
         onClick={() => fileRef.current?.click()}
       >
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
-        <div className="dz-ico">📂</div>
+        <div className="dz-ico"><Folder size={18} /></div>
         <h3>Drag &amp; drop a file, or click to select</h3>
         <p>Your file will be encrypted with AES-256 before upload</p>
         <small>PDF, JPEG, PNG, TXT — max 50 MB</small>
@@ -261,7 +263,7 @@ export default function Upload({ walletAddress, onNavigate }) {
         <>
           <div className="card" style={{ marginTop: 12, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-              <span style={{ fontSize: 20 }}>📄</span>
+              <span style={{ fontSize: 20 }}><FileText size={18} /></span>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600 }}>{file.name}</div>
                 <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>
@@ -273,7 +275,7 @@ export default function Upload({ walletAddress, onNavigate }) {
               className="btn btn-g"
               style={{ padding: '3px 9px', fontSize: 11 }}
               onClick={() => { setFile(null); setExpiryDate(''); }}
-            >✕</button>
+            ><X size={18} /></button>
           </div>
 
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -292,9 +294,9 @@ export default function Upload({ walletAddress, onNavigate }) {
       )}
 
       <div className="sec-info">
-        <span className="sec-row">🔒 <strong>AES-256 encryption</strong> applied before upload</span>
-        <span className="sec-row">🔗 <strong>SHA-256 hash</strong> registered on Sepolia blockchain</span>
-        <span className="sec-row">☁️ Encrypted file stored on <strong>IPFS/Pinata</strong></span>
+        <span className="sec-row"><Lock size={18} /> <strong>AES-256 encryption</strong> applied before upload</span>
+        <span className="sec-row"><Link size={18} /> <strong>SHA-256 hash</strong> registered on Sepolia blockchain</span>
+        <span className="sec-row"><Cloud size={18} /> Encrypted file stored on <strong>IPFS/Pinata</strong></span>
       </div>
 
       <button
@@ -303,7 +305,7 @@ export default function Upload({ walletAddress, onNavigate }) {
         disabled={!file}
         onClick={handleUpload}
       >
-        ⬆️ Upload &amp; Secure via MetaMask 🦊
+        <UploadCloud size={18} /> Upload &amp; Secure via MetaMask <Activity size={18} />
       </button>
     </div>
   );

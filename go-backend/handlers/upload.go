@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net/http"
 	"time"
@@ -119,7 +120,8 @@ func UploadFile(c *gin.Context) {
 
 		_, err = collection.InsertOne(ctx, record)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "DB save failed"})
+			log.Printf("MongoDB InsertOne Error: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("DB save failed: %v", err)})
 			return
 		}
 	}

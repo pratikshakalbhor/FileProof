@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAllFiles } from '../utils/api';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, Search, X } from 'lucide-react';
+
 
 const fmtSize = b =>
   !b ? '—' : b < 1024 ? b + ' B' : b < 1048576
@@ -13,7 +15,7 @@ function hashPill(hash) {
 
 function StatusBadge({ status }) {
   const cls  = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? '✅' : status === 'tampered' ? '❌' : '⏳';
+  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
   return <span className={`badge ${cls}`}>{icon} {status}</span>;
 }
 
@@ -51,13 +53,13 @@ export default function MyFiles({ onNavigate, walletAddress }) {
           <h1>My Files</h1>
           <p>{files.length} file{files.length !== 1 ? 's' : ''} stored on blockchain</p>
         </div>
-        <button className="ref-btn" onClick={fetchFiles}>⟳ Refresh</button>
+        <button className="ref-btn" onClick={fetchFiles}><RefreshCw size={18} /> Refresh</button>
       </div>
 
-      {error && <div className="error-box">⚠️ {error}</div>}
+      {error && <div className="error-box"><AlertTriangle size={18} /> {error}</div>}
 
       <div className="search-bar">
-        <span style={{ color: 'var(--text-muted)' }}>🔍</span>
+        <span style={{ color: 'var(--text-muted)' }}><Search size={18} /></span>
         <input
           placeholder="Search by name, hash, or wallet..."
           value={query}
@@ -67,7 +69,7 @@ export default function MyFiles({ onNavigate, walletAddress }) {
           <button
             onClick={() => setQuery('')}
             style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: 13 }}
-          >✕</button>
+          ><X size={18} /></button>
         )}
       </div>
 

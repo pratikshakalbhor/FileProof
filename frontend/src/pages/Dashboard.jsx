@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAllFiles, getStats } from '../utils/api';
+import { Activity, AlertTriangle, CheckCircle, Clock, FileText, RefreshCw, TrendingUp, UploadCloud } from 'lucide-react';
+
 
 const fmtSize = b =>
   !b ? '—' : b < 1024 ? b + ' B' : b < 1048576
@@ -62,38 +64,38 @@ export default function Dashboard({ onNavigate, walletAddress }) {
           <h1>Dashboard</h1>
           <p>Overview of your blockchain file registry</p>
         </div>
-        <button className="ref-btn" onClick={fetchData}>⟳ Refresh</button>
+        <button className="ref-btn" onClick={fetchData}><RefreshCw size={18} /> Refresh</button>
       </div>
 
       {error && (
-        <div className="error-box">⚠️ {error} — make sure the Go backend is running on port 5000.</div>
+        <div className="error-box"><AlertTriangle size={18} /> {error} — make sure the Go backend is running on port 5000.</div>
       )}
 
       {/* ── Stats ── */}
       <div className="stats">
         <div className="stat">
-          <div className="stat-ico ico-blue">📄</div>
+          <div className="stat-ico ico-blue"><FileText size={18} /></div>
           <div>
             <div className="stat-val">{stats.total}</div>
             <div className="stat-lbl">Total Files</div>
           </div>
         </div>
         <div className="stat">
-          <div className="stat-ico ico-green">✅</div>
+          <div className="stat-ico ico-green"><CheckCircle size={18} /></div>
           <div>
             <div className="stat-val">{stats.valid}</div>
             <div className="stat-lbl">Valid Files</div>
           </div>
         </div>
         <div className="stat">
-          <div className="stat-ico ico-red">⚠️</div>
+          <div className="stat-ico ico-red"><AlertTriangle size={18} /></div>
           <div>
             <div className="stat-val">{stats.tampered}</div>
             <div className="stat-lbl">Tampered</div>
           </div>
         </div>
         <div className="stat">
-          <div className="stat-ico ico-purple">📈</div>
+          <div className="stat-ico ico-purple"><TrendingUp size={18} /></div>
           <div>
             <div className="stat-val">{integrityPct}%</div>
             <div className="stat-lbl">Integrity Score</div>
@@ -106,7 +108,7 @@ export default function Dashboard({ onNavigate, walletAddress }) {
       <div className="two-col">
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: 12, fontWeight: 600 }}>📈 Integrity Score</span>
+            <span style={{ fontSize: 12, fontWeight: 600 }}><TrendingUp size={18} /> Integrity Score</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-teal)' }}>{integrityPct}%</span>
           </div>
           <div className="progress">
@@ -134,7 +136,7 @@ export default function Dashboard({ onNavigate, walletAddress }) {
       <div className="actions-row">
         <div className="ac" onClick={() => onNavigate('upload')}>
           <div className="ac-l">
-            <span className="ac-ico">⬆️</span>
+            <span className="ac-ico"><UploadCloud size={18} /></span>
             <div className="ac-t">
               <h3>Upload File</h3>
               <p>Store &amp; hash on blockchain</p>
@@ -144,7 +146,7 @@ export default function Dashboard({ onNavigate, walletAddress }) {
         </div>
         <div className="ac grn" onClick={() => onNavigate('verify')}>
           <div className="ac-l">
-            <span className="ac-ico">✅</span>
+            <span className="ac-ico"><CheckCircle size={18} /></span>
             <div className="ac-t">
               <h3>Verify File</h3>
               <p>Check file integrity</p>
@@ -157,7 +159,7 @@ export default function Dashboard({ onNavigate, walletAddress }) {
       {/* ── Recent Files ── */}
       <div className="card">
         <div className="sec-hdr">
-          <span className="sec-title">🕐 Recent Files</span>
+          <span className="sec-title"><Clock size={18} /> Recent Files</span>
           <button className="view-all" onClick={() => onNavigate('my-files')}>View all →</button>
         </div>
         {files.length === 0 ? (
@@ -207,8 +209,8 @@ export default function Dashboard({ onNavigate, walletAddress }) {
 }
 
 function StatusBadge({ status, isExpired }) {
-  if (isExpired) return <span className="badge b-pending" style={{ color: '#fca5a5', borderColor: '#fca5a5' }}>⚠️ Expired</span>;
+  if (isExpired) return <span className="badge b-pending" style={{ color: '#fca5a5', borderColor: '#fca5a5' }}><AlertTriangle size={18} /> Expired</span>;
   const cls = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? '✅' : status === 'tampered' ? '❌' : '⏳';
+  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
   return <span className={`badge ${cls}`}>{icon} {status}</span>;
 }
