@@ -9,7 +9,6 @@ import {
   Bell,
   User,
   LogOut,
-  Wallet
 } from 'lucide-react';
 
 const NAV = [
@@ -22,11 +21,7 @@ const NAV = [
   { id: 'profile',        label: 'Profile',        icon: User },
 ];
 
-export default function Sidebar({ activePage, onNavigate, walletAddress, onLogout }) {
-  const shortAddr = walletAddress
-    ? `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`
-    : 'Not connected';
-
+export default function Sidebar({ activePage, onNavigate, onLogout }) {
   return (
     <aside className="sidebar">
       {/* Logo */}
@@ -62,20 +57,6 @@ export default function Sidebar({ activePage, onNavigate, walletAddress, onLogou
           <span className="dot" />
           Sepolia Testnet
         </div>
-
-        {/* Wallet info */}
-        {walletAddress && (
-          <motion.div
-            className="wallet-info"
-            whileHover={{ borderColor: 'var(--accent-cyan)' }}
-          >
-            <div className="wallet-info-icon"><Wallet size={14} /></div>
-            <div className="wallet-info-details">
-              <div className="wallet-info-label">Connected Wallet</div>
-              <div className="wallet-info-address">{shortAddr}</div>
-            </div>
-          </motion.div>
-        )}
 
         {/* Logout */}
         {onLogout && (

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAllFiles } from '../utils/api';
-import { Activity, AlertTriangle, CheckCircle, RefreshCw, Search, X } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, Search, X, FileText } from 'lucide-react';
 
 
 const fmtSize = b =>
@@ -14,9 +14,25 @@ function hashPill(hash) {
 }
 
 function StatusBadge({ status }) {
-  const cls  = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
-  return <span className={`badge ${cls}`}>{icon} {status}</span>;
+  if (status === 'valid') {
+    return (
+      <span className="badge b-valid" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 200, 150, 0.1)', color: 'var(--accent-teal)', border: '1px solid rgba(0, 200, 150, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <CheckCircle size={13} /> Valid
+      </span>
+    );
+  }
+  if (status === 'tampered') {
+    return (
+      <span className="badge b-tampered" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 68, 68, 0.1)', color: 'var(--accent-red)', border: '1px solid rgba(255, 68, 68, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <AlertTriangle size={13} /> Tampered
+      </span>
+    );
+  }
+  return (
+    <span className="badge b-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 140, 66, 0.1)', color: 'var(--accent-orange)', border: '1px solid rgba(255, 140, 66, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+      <Activity size={13} /> Not Synced
+    </span>
+  );
 }
 
 export default function MyFiles({ onNavigate, walletAddress }) {
@@ -105,7 +121,10 @@ export default function MyFiles({ onNavigate, walletAddress }) {
                     onClick={() => onNavigate('file-details', f)}
                   >
                     <td>
-                      <div className="fname">{name.length > 30 ? name.slice(0, 27) + '...' : name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <span style={{ fontSize: 16, color: 'var(--accent-cyan)', flexShrink: 0 }}><FileText size={16} /></span>
+                        <div className="fname">{name.length > 30 ? name.slice(0, 27) + '...' : name}</div>
+                      </div>
                       <div className="ftype">{f.fileType || f.type}</div>
                     </td>
                     <td>{hashPill(hash)}</td>

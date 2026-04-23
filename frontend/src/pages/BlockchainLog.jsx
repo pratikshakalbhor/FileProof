@@ -1,12 +1,28 @@
 import { useState, useEffect } from 'react';
 import { getAllFiles } from '../utils/api';
-import { Activity, AlertTriangle, CheckCircle, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, RefreshCw, ShieldCheck, FileText } from 'lucide-react';
 
 
 function StatusBadge({ status }) {
-  const cls  = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
-  return <span className={`badge ${cls}`}>{icon} {status}</span>;
+  if (status === 'valid') {
+    return (
+      <span className="badge b-valid" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 200, 150, 0.1)', color: 'var(--accent-teal)', border: '1px solid rgba(0, 200, 150, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <CheckCircle size={13} /> Valid
+      </span>
+    );
+  }
+  if (status === 'tampered') {
+    return (
+      <span className="badge b-tampered" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 68, 68, 0.1)', color: 'var(--accent-red)', border: '1px solid rgba(255, 68, 68, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <AlertTriangle size={13} /> Tampered
+      </span>
+    );
+  }
+  return (
+    <span className="badge b-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 140, 66, 0.1)', color: 'var(--accent-orange)', border: '1px solid rgba(255, 140, 66, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+      <Activity size={13} /> Not Synced
+    </span>
+  );
 }
 
 export default function BlockchainLog() {
@@ -114,7 +130,10 @@ export default function BlockchainLog() {
                     </a>
                   </td>
                   <td style={{ color: 'var(--text-primary)', fontSize: 12 }}>
-                    {(f.filename || f.name || '').slice(0, 24)}{(f.filename || f.name || '').length > 24 ? '...' : ''}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ fontSize: 14, color: 'var(--accent-cyan)', flexShrink: 0 }}><FileText size={14} /></span>
+                      <span>{(f.filename || f.name || '').slice(0, 24)}{(f.filename || f.name || '').length > 24 ? '...' : ''}</span>
+                    </div>
                   </td>
                   <td><StatusBadge status={f.status} /></td>
                   <td>

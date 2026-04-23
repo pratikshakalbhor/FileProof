@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAllFiles, getStats } from '../utils/api';
-import { Activity, AlertTriangle, CheckCircle, Clock, FileText, RefreshCw, TrendingUp, UploadCloud } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Clock, FileText, RefreshCw, TrendingUp, UploadCloud, AlertCircle } from 'lucide-react';
 
 
 const fmtSize = b =>
@@ -181,11 +181,7 @@ export default function Dashboard({ onNavigate, walletAddress }) {
                 <tr key={f.fileId || f.id} className="tr-click" onClick={() => onNavigate('file-details', f)}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-                      <span style={{
-                        width: 7, height: 7, borderRadius: '50%',
-                        background: isExpired ? '#fca5a5' : f.status === 'valid' ? 'var(--accent-teal)' : 'var(--accent-red)',
-                        flexShrink: 0, display: 'inline-block',
-                      }} />
+                      <span style={{ fontSize: 16, color: 'var(--accent-cyan)', flexShrink: 0 }}><FileText size={16} /></span>
                       <div>
                         <div className="fname">
                           {f.filename || f.name}
@@ -209,8 +205,30 @@ export default function Dashboard({ onNavigate, walletAddress }) {
 }
 
 function StatusBadge({ status, isExpired }) {
-  if (isExpired) return <span className="badge b-pending" style={{ color: '#fca5a5', borderColor: '#fca5a5' }}><AlertTriangle size={18} /> Expired</span>;
-  const cls = status === 'valid' ? 'b-valid' : status === 'tampered' ? 'b-tampered' : 'b-pending';
-  const icon = status === 'valid' ? <CheckCircle size={18} /> : status === 'tampered' ? <AlertTriangle size={18} /> : <Activity size={18} />;
-  return <span className={`badge ${cls}`}>{icon} {status}</span>;
+  if (isExpired) {
+    return (
+      <span className="badge b-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(252, 165, 165, 0.1)', color: '#fca5a5', border: '1px solid rgba(252, 165, 165, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <AlertCircle size={13} /> Expired
+      </span>
+    );
+  }
+  if (status === 'valid') {
+    return (
+      <span className="badge b-valid" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0, 200, 150, 0.1)', color: 'var(--accent-teal)', border: '1px solid rgba(0, 200, 150, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <CheckCircle size={13} /> Valid
+      </span>
+    );
+  }
+  if (status === 'tampered') {
+    return (
+      <span className="badge b-tampered" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 68, 68, 0.1)', color: 'var(--accent-red)', border: '1px solid rgba(255, 68, 68, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+        <AlertTriangle size={13} /> Tampered
+      </span>
+    );
+  }
+  return (
+    <span className="badge b-pending" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(255, 140, 66, 0.1)', color: 'var(--accent-orange)', border: '1px solid rgba(255, 140, 66, 0.3)', borderRadius: '20px', padding: '4px 12px', fontSize: '11px', fontWeight: '600' }}>
+      <Activity size={13} /> Not Synced
+    </span>
+  );
 }

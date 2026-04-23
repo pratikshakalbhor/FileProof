@@ -59,29 +59,11 @@ export default function Verify({ walletAddress }) {
         </div>
       </div>
 
-      <div className="how-it-works">
-        <div className="how-step">
-          <div className="how-num">1</div>
-          <span className="how-lbl">Hash computed</span>
-        </div>
-        <span className="how-arr">→</span>
-        <div className="how-step">
-          <div className="how-num">2</div>
-          <span className="how-lbl">Compare with blockchain</span>
-        </div>
-        <span className="how-arr">→</span>
-        <div className="how-step">
-          <div className="how-num">3</div>
-          <span className="how-lbl">Result shown</span>
-        </div>
-      </div>
-
-      {error && (
-        <div className="error-box" style={{ marginBottom: 14 }}><AlertTriangle size={18} /> {error}</div>
-      )}
-
       {!result && (
         <>
+          {error && (
+            <div className="error-box" style={{ marginBottom: 14 }}><AlertTriangle size={18} /> {error}</div>
+          )}
           <div
             className={`dz grn${drag ? ' on' : ''}`}
             onDragOver={e => { e.preventDefault(); setDrag(true); }}

@@ -1,25 +1,25 @@
 import { useState, useEffect } from 'react';
 import './index.css';
 
-import Login        from './pages/Login';
-import Sidebar      from './components/Sidebar';
-import Topbar       from './components/Topbar';
-import Dashboard    from './pages/Dashboard';
-import Upload       from './pages/Upload';
-import Verify       from './pages/Verify';
-import MyFiles      from './pages/MyFiles';
+import Login from './pages/Login';
+import Sidebar from './components/Sidebar';
+import Topbar from './components/Topbar';
+import Dashboard from './pages/Dashboard';
+import Upload from './pages/Upload';
+import Verify from './pages/Verify';
+import MyFiles from './pages/MyFiles';
 import BlockchainLog from './pages/BlockchainLog';
-import FileDetails  from './pages/FileDetails';
-import Alerts       from './pages/Alerts';
-import Profile      from './pages/Profile';
+import FileDetails from './pages/FileDetails';
+import Alerts from './pages/Alerts';
+import Profile from './pages/Profile';
 import PublicVerify from './pages/PublicVerify';
 
 export default function App() {
   const [walletAddress, setWalletAddress] = useState(localStorage.getItem('wallet') || null);
-  const [activePage, setActivePage]       = useState('dashboard');
-  const [selectedFile, setSelectedFile]   = useState(null);
+  const [activePage, setActivePage] = useState('dashboard');
+  const [selectedFile, setSelectedFile] = useState(null);
   const [publicVerifyId, setPublicVerifyId] = useState(null);
-  const [theme, setTheme]                 = useState(localStorage.getItem('theme') || 'dark');
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
