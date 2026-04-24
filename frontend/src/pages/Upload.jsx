@@ -18,15 +18,16 @@ const fmtSize = b =>
     : (b / 1048576).toFixed(2) + ' MB';
 
 export default function Upload({ walletAddress, onNavigate }) {
-  const [phase, setPhase] = useState('idle');     // idle | uploading | done
-  const [file, setFile]   = useState(null);
-  const [expiryDate, setExpiryDate] = useState('');
-  const [drag, setDrag]   = useState(false);
-  const [stepsDone, setStepsDone] = useState([]);
-  const [activeStep, setActiveStep] = useState(null);
-  const [progress, setProgress]   = useState(0);
-  const [result, setResult] = useState(null);
-  const [error, setError]   = useState('');
+  const [phase, setPhase]         = useState('idle');     // idle | uploading | blockchain | done
+  const [file, setFile]            = useState(null);
+  const [expiryDate, setExpiryDate]= useState('');
+  const [drag, setDrag]            = useState(false);
+  const [stepsDone, setStepsDone]  = useState([]);
+  const [activeStep, setActiveStep]= useState(null);
+  const [progress, setProgress]    = useState(0);
+  const [result, setResult]        = useState(null);
+  const [error, setError]          = useState('');
+  const [chainStatus, setChainStatus] = useState(''); // 'waiting' | 'confirmed' | 'rejected'
   const fileRef = useRef();
 
   /* ── handlers ── */
@@ -49,27 +50,27 @@ export default function Upload({ walletAddress, onNavigate }) {
 
   const handleUpload = async (e) => {
     if (e) e.preventDefault();
-    console.log("Upload triggered - starting new flow");
     if (!file) return;
-    
-    // Safety check for MetaMask
+
+    // MetaMask check
     if (!window.ethereum) {
-      setError("MetaMask is not installed. Please install it to upload to Blockchain.");
+      setError('MetaMask is not installed. Please install it to upload files to the Blockchain.');
       return;
     }
 
     setPhase('uploading');
-    setStepsDone([]); 
-    setActiveStep(null); 
-    setProgress(0); 
+    setStepsDone([]);
+    setActiveStep(null);
+    setProgress(0);
     setError('');
+    setChainStatus('');
 
     try {
-      // Setup visual progression for off-chain steps (stops before chain step)
+      // ── Visual step progression for backend steps ──
       const stepDuration = 600;
       let si = 0;
       const stepTimer = setInterval(() => {
-        if (si < STEPS.length - 1) { 
+        if (si < STEPS.length - 1) {
           setActiveStep(STEPS[si].id);
           if (si > 0) setStepsDone(prev => [...prev, STEPS[si - 1].id]);
           setProgress(Math.round((si / STEPS.length) * 80));
@@ -77,51 +78,72 @@ export default function Upload({ walletAddress, onNavigate }) {
         }
       }, stepDuration);
 
-      // --- 1. Call Backend API (Generate hash, encrypt, MongoDB, etc) ---
-      console.log("Sending file to backend...");
+      // ── STEP 1: Upload to Go Backend ──
+      console.log('📤 Sending file to backend...');
       const formattedExpiry = expiryDate ? new Date(expiryDate).toISOString() : null;
       const data = await uploadFile(file, walletAddress || '', formattedExpiry);
-      console.log("Backend response received:", data);
-      
+      console.log('✅ Backend response:', data);
+
       const file_ = data.file || data;
       clearInterval(stepTimer);
 
-      // --- 2. Call MetaMask for real transaction ---
+      // ── STEP 2: MetaMask — sealFile on blockchain ──
       setActiveStep('chain');
+      setChainStatus('waiting');
       setProgress(85);
-      setStepsDone(STEPS.map(s => s.id).filter(id => id !== 'chain')); 
-      
-      let realTxHash = "Failed - Not Authorized / Fallback";
+      setStepsDone(STEPS.map(s => s.id).filter(id => id !== 'chain'));
+
+      let txHash = null;
+      let txSuccess = false;
+
       try {
-        console.log("Prompting MetaMask with sealFile...");
-        realTxHash = await sealFileOnChain(file_);
-        console.log("MetaMask Transaction Confirmed! TxHash:", realTxHash);
+        console.log('🦊 Prompting MetaMask for sealFile...');
+        const chainResult = await sealFileOnChain(file_);
+
+        // ── STEP 3: Verify receipt.status === 1 ──
+        txHash = chainResult.txHash;
+        txSuccess = chainResult.status === 'success';
+        setChainStatus('confirmed');
+        console.log('✅ Blockchain confirmed! TxHash:', txHash);
+
       } catch (chainErr) {
-        console.warn("Blockchain sealing failed:", chainErr);
-        setError(chainErr.message || "Not authorized: Blockchain tx failed, but file was stored securely as a fallback.");
+        console.warn('⚠️ Blockchain error:', chainErr.message);
+
+        if (chainErr.code === 'USER_REJECTED') {
+          // Graceful rejection — don't crash, show warning
+          setChainStatus('rejected');
+          setError('⚠️ MetaMask transaction rejected. Your file was saved to backend, but NOT sealed on-chain.');
+        } else {
+          setChainStatus('rejected');
+          setError(`Blockchain error: ${chainErr.message}`);
+        }
+        // File still saved in backend — continue to 'done' with null txHash
       }
 
-      // Inject real transaction hash into our result data
-      file_.txHash = realTxHash;
+      file_.txHash   = txHash;
+      file_.txSuccess = txSuccess;
 
-      // Finish progression
       setStepsDone(STEPS.map(s => s.id));
       setActiveStep(null);
       setProgress(100);
       setResult(file_);
       setPhase('done');
-      
+
     } catch (err) {
-      console.error(err);
+      console.error('Upload failed:', err);
       setPhase('idle');
-      setError(err.message || 'Upload or Transaction failed.');
-      setStepsDone([]); setActiveStep(null); setProgress(0);
+      setError(err.message || 'Upload failed. Please try again.');
+      setStepsDone([]);
+      setActiveStep(null);
+      setProgress(0);
+      setChainStatus('');
     }
   };
 
   const reset = () => {
-    setPhase('idle'); setFile(null); setExpiryDate(''); setStepsDone([]);
-    setActiveStep(null); setProgress(0); setResult(null); setError('');
+    setPhase('idle'); setFile(null); setExpiryDate('');
+    setStepsDone([]); setActiveStep(null); setProgress(0);
+    setResult(null); setError(''); setChainStatus('');
   };
 
   /* ── UI phases ── */
@@ -129,14 +151,16 @@ export default function Upload({ walletAddress, onNavigate }) {
     return (
       <div className="page-inner" style={{ maxWidth: 640 }}>
         <div className="ph"><div><h1>Upload File</h1><p>Encrypt, store, and register on the blockchain</p></div></div>
-        <div className="card">
+      <div className="card">
           <h3 style={{ fontSize: 14, fontWeight: 600, marginBottom: 5 }}>Processing your file...</h3>
           <p style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 18 }}>{file?.name}</p>
           <div className="progress" style={{ height: 8 }}>
             <div className="progress-fill fill-cyan" style={{ width: `${progress}%` }} />
           </div>
           <p style={{ fontSize: 10, color: 'var(--text-secondary)', marginTop: 5, marginBottom: 18 }}>
-            {progress}% complete
+            {chainStatus === 'waiting'
+              ? '🦊 Waiting for MetaMask... Please confirm in MetaMask popup.'
+              : `${progress}% complete`}
           </p>
           <div className="up-steps">
             {STEPS.map(s => {
@@ -151,7 +175,7 @@ export default function Upload({ walletAddress, onNavigate }) {
                     color: done ? 'var(--text-primary)' : active ? 'var(--accent-cyan)' : 'var(--text-muted)',
                     fontWeight: active ? 600 : 400,
                   }}>
-                    {s.label}
+                    {s.id === 'chain' && active ? 'Waiting for Blockchain Confirmation...' : s.label}
                   </span>
                 </div>
               );
@@ -164,15 +188,29 @@ export default function Upload({ walletAddress, onNavigate }) {
 
   if (phase === 'done' && result) {
     const file_ = result.file || result;
+    const sealed = file_.txSuccess === true;
     return (
       <div className="page-inner" style={{ maxWidth: 640 }}>
         <div className="ph"><div><h1>Upload File</h1><p>Encrypt, store, and register on the blockchain</p></div></div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
-          <div className="vr valid" style={{ textAlign: 'center' }}>
-            <div className="vr-ico"><CheckCircle size={18} /></div>
-            <h2>File Secured Successfully!</h2>
-            <p>Encrypted, stored, and registered on the Sepolia blockchain.</p>
-          </div>
+          {sealed ? (
+            <div className="vr valid" style={{ textAlign: 'center' }}>
+              <div className="vr-ico"><CheckCircle size={18} /></div>
+              <h2>File Sealed on Blockchain! ✅</h2>
+              <p>Encrypted, stored, and confirmed on Sepolia.</p>
+            </div>
+          ) : (
+            <div className="vr" style={{ textAlign: 'center', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)' }}>
+              <div className="vr-ico" style={{ color: '#fbbf24' }}><AlertTriangle size={18} /></div>
+              <h2 style={{ color: '#fbbf24' }}>File Saved (Not Sealed) ⚠️</h2>
+              <p style={{ color: 'var(--text-secondary)' }}>File stored in backend, but MetaMask transaction was not confirmed.</p>
+            </div>
+          )}
+          {error && (
+            <div className="error-box" style={{ marginBottom: 8 }}>
+              <AlertTriangle size={16} /> {error}
+            </div>
+          )}
           <div className="card">
             <h3 style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Registration Details</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
@@ -181,10 +219,8 @@ export default function Upload({ walletAddress, onNavigate }) {
                   {file_.hash || file_.fileHash}
                 </span>
               </DetailRow>
-              <DetailRow label="Real TxHash">
-                {file_.txHash && file_.txHash.startsWith("Failed") ? (
-                  <span style={{ fontSize: 10, color: '#fca5a5' }}>{file_.txHash}</span>
-                ) : (
+              <DetailRow label="Blockchain Tx">
+                {sealed ? (
                   <a
                     href={`https://sepolia.etherscan.io/tx/${file_.txHash}`}
                     target="_blank" rel="noreferrer"
@@ -192,6 +228,8 @@ export default function Upload({ walletAddress, onNavigate }) {
                   >
                     {(file_.txHash || '').slice(0, 35)}...
                   </a>
+                ) : (
+                  <span style={{ fontSize: 10, color: '#fca5a5' }}>Not sealed — MetaMask rejected</span>
                 )}
               </DetailRow>
               {file_.cloudURL || file_.ipfsURL ? (
@@ -302,10 +340,14 @@ export default function Upload({ walletAddress, onNavigate }) {
       <button
         className="btn btn-teal btn-full"
         style={{ marginTop: 14 }}
-        disabled={!file}
+        disabled={!file || phase === 'uploading'}
         onClick={handleUpload}
       >
-        <UploadCloud size={18} /> Upload &amp; Secure via MetaMask <Activity size={18} />
+        {phase === 'uploading' && activeStep === 'chain'
+          ? <><Activity size={18} /> Waiting for Blockchain...</>
+          : phase === 'uploading'
+          ? <><RefreshCw size={18} /> Processing...</>
+          : <><UploadCloud size={18} /> Upload &amp; Seal via MetaMask <Activity size={18} /></>}
       </button>
     </div>
   );

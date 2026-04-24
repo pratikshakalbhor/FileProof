@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   Folder,
   Activity,
-  Bell,
   User,
   LogOut,
 } from 'lucide-react';
@@ -17,7 +16,6 @@ const NAV = [
   { id: 'verify',         label: 'Verify File',    icon: ShieldCheck },
   { id: 'my-files',       label: 'My Files',       icon: Folder },
   { id: 'blockchain-log', label: 'Blockchain Log', icon: Activity },
-  { id: 'alerts',         label: 'Alerts',         icon: Bell },
   { id: 'profile',        label: 'Profile',        icon: User },
 ];
 

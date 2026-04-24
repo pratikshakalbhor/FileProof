@@ -10,7 +10,6 @@ import Verify from './pages/Verify';
 import MyFiles from './pages/MyFiles';
 import BlockchainLog from './pages/BlockchainLog';
 import FileDetails from './pages/FileDetails';
-import Alerts from './pages/Alerts';
 import Profile from './pages/Profile';
 import PublicVerify from './pages/PublicVerify';
 
@@ -70,8 +69,6 @@ export default function App() {
         return <BlockchainLog />;
       case 'file-details':
         return <FileDetails file={selectedFile} onNavigate={handleNavigate} />;
-      case 'alerts':
-        return <Alerts walletAddress={walletAddress} onNavigate={handleNavigate} />;
       case 'profile':
         return <Profile walletAddress={walletAddress} onLogout={handleLogout} />;
       default:
@@ -87,7 +84,6 @@ export default function App() {
       case 'my-files': return 'My Files';
       case 'blockchain-log': return 'Blockchain Log';
       case 'file-details': return 'File Details';
-      case 'alerts': return 'Alerts';
       case 'profile': return 'Profile';
       default: return 'Dashboard';
     }
@@ -97,7 +93,7 @@ export default function App() {
     <div className="app">
       <Sidebar activePage={activePage} onNavigate={handleNavigate} walletAddress={walletAddress} onLogout={handleLogout} />
       <div className="main">
-        <Topbar walletAddress={walletAddress} title={getPageTitle(activePage)} theme={theme} toggleTheme={toggleTheme} />
+        <Topbar walletAddress={walletAddress} title={getPageTitle(activePage)} theme={theme} toggleTheme={toggleTheme} onNavigate={handleNavigate} />
         <div className="page">
           {renderPage()}
         </div>
