@@ -264,6 +264,16 @@
   border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
+.v-result-verdict.warning {
+  background: rgba(245, 158, 11, 0.05);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.v-result-verdict.grey {
+  background: rgba(156, 163, 175, 0.05);
+  border: 1px solid rgba(156, 163, 175, 0.2);
+}
+
 .v-status-badge {
   display: inline-flex;
   padding: 6px 16px;
@@ -277,6 +287,9 @@
 
 .v-status-badge.valid { background: rgba(45, 212, 191, 0.15); color: var(--accent-teal); }
 .v-status-badge.tampered { background: rgba(239, 68, 68, 0.15); color: var(--accent-red); }
+.v-status-badge.warning { background: rgba(245, 158, 11, 0.15); color: #F59E0B; }
+.v-status-badge.grey { background: rgba(156, 163, 175, 0.15); color: #9CA3AF; }
+
 
 .v-verdict-title {
   font-size: 26px;

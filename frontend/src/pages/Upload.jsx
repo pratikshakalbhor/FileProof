@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadFile } from '../utils/api';
 import { sealFileOnChain } from '../utils/blockchain';
-import { Activity, AlertTriangle, CheckCircle, Circle, Cloud, FileText, Folder, Link, Lock, RefreshCw, UploadCloud, X } from 'lucide-react';
+import { Activity, AlertTriangle, CheckCircle, Circle, Cloud, FileText, Folder, Link, Lock, RefreshCw, ShieldCheck, UploadCloud, X } from 'lucide-react';
 
 
 const STEPS = [
@@ -131,13 +131,7 @@ export default function Upload({ walletAddress }) {
       setResult(file_);
       setPhase('done');
 
-      // ── AUTO-NAVIGATE to Verify page after successful seal ──
-      if (txSuccess && (file_.fileId || file_.id)) {
-        setTimeout(() => {
-          navigate('/verify?id=' + (file_.fileId || file_.id));
-        }, 1500); // brief delay so user sees '✅ Sealed' message
-      }
-
+      // Remove auto-navigation to allow user to see success state and choose next action
     } catch (err) {
       console.error('Upload failed:', err);
       setPhase('idle');
@@ -205,8 +199,8 @@ export default function Upload({ walletAddress }) {
           {sealed ? (
             <div className="vr valid" style={{ textAlign: 'center' }}>
               <div className="vr-ico"><CheckCircle size={18} /></div>
-              <h2>File Sealed on Blockchain! ✅</h2>
-              <p>Encrypted, stored, and confirmed on Sepolia.</p>
+              <h2>✅ File uploaded successfully!</h2>
+              <p>You can verify this file anytime in the future to check if it has been modified.</p>
             </div>
           ) : (
             <div className="vr" style={{ textAlign: 'center', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.3)' }}>
@@ -223,12 +217,12 @@ export default function Upload({ walletAddress }) {
           <div className="card">
             <h3 style={{ fontSize: 12, fontWeight: 600, marginBottom: 12 }}>Registration Details</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-              <DetailRow label="SHA-256 Hash">
+              <DetailRow label="File Identity">
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-cyan)', wordBreak: 'break-all' }}>
                   {file_.hash || file_.fileHash}
                 </span>
               </DetailRow>
-              <DetailRow label="Blockchain Tx">
+              <DetailRow label="Digital Seal">
                 {sealed ? (
                   <a
                     href={`https://sepolia.etherscan.io/tx/${file_.txHash}`}
@@ -267,14 +261,17 @@ export default function Upload({ walletAddress }) {
                   className="btn btn-purple" 
                   style={{ flex: 1, textAlign: 'center', textDecoration: 'none', justifyContent: 'center' }}
                 >
-                  <Link size={18} /> View on Etherscan
+                  <Link size={18} /> View Official Record
                 </a>
             </div>
           )}
 
-          <div className="btn-row">
-            <button className="btn btn-s" style={{ flex: 1 }} onClick={reset}>Upload Another</button>
+          <div className="btn-row" style={{ display: 'flex', gap: 10, marginTop: 10 }}>
+            <button className="btn btn-s" style={{ flex: 1 }} onClick={() => navigate('/verify?id=' + (file_.fileId || file_.id))}>
+              <ShieldCheck size={18} /> Verify This File
+            </button>
             <button className="btn btn-p" style={{ flex: 1 }} onClick={() => navigate('/my-files')}>View My Files</button>
+            <button className="btn btn-g" style={{ flex: 0.5 }} onClick={reset}>Upload Another</button>
           </div>
         </div>
       </div>

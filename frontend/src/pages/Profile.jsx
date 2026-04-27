@@ -123,10 +123,15 @@ export default function Profile({ walletAddress, onLogout }) {
     if (!walletAddress) return;
     setBalLoad(true);
     try {
-      const provider = new ethers.JsonRpcProvider('https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161');
+      if (!window.ethereum) throw new Error("MetaMask not found");
+      console.log("Using BrowserProvider for balance check");
+      const provider = new ethers.BrowserProvider(window.ethereum);
       const raw = await provider.getBalance(walletAddress);
       setEthBal(parseFloat(ethers.formatEther(raw)).toFixed(4));
-    } catch { setEthBal('—'); }
+    } catch (err) { 
+      console.error("Balance fetch error:", err);
+      setEthBal('—'); 
+    }
     finally { setBalLoad(false); }
   }, [walletAddress]);
 

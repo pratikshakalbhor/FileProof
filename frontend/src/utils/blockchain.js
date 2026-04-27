@@ -21,6 +21,7 @@ const getContractInstance = async () => {
   await window.ethereum.request({ method: 'eth_requestAccounts' });
 
   // Fresh provider + signer (ethers v6 BrowserProvider)
+  console.log("Using BrowserProvider for contract instance");
   const provider = new ethers.BrowserProvider(window.ethereum);
   const network  = await provider.getNetwork();
 
@@ -137,9 +138,15 @@ export const getFileFromChain = async (fileId) => {
   }
 
   // Use a public RPC for read-only calls (no MetaMask needed)
+  if (window.ethereum) {
+    console.log("Using BrowserProvider for read-only call");
+  } else {
+    console.log("Using JsonRpcProvider (Fallback) for read-only call");
+  }
+  
   const provider = window.ethereum
     ? new ethers.BrowserProvider(window.ethereum)
-    : new ethers.JsonRpcProvider('https://rpc.sepolia.org');
+    : new ethers.JsonRpcProvider(process.env.REACT_APP_RPC_URL || 'https://rpc.sepolia.org');
 
   const contract = new ethers.Contract(contractAddress, abi, provider);
   return contract.getFile(fileId);

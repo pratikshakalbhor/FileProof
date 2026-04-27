@@ -50,9 +50,9 @@ export default function Verify({ onNotify, walletAddress }) {
   }, [location]);
 
   const STEPS = [
-    { n: 1, label: 'Computing Cryptographic Hash', icon: <Search size={16} /> },
-    { n: 2, label: 'Fetching Blockchain Ledger', icon: <Database size={16} /> },
-    { n: 3, label: 'Auditing Smart Contract State', icon: <LinkIcon size={16} /> },
+    { n: 1, label: 'Reading File...', icon: <Search size={16} /> },
+    { n: 2, label: 'Checking Record...', icon: <Database size={16} /> },
+    { n: 3, label: 'Verifying Seal...', icon: <LinkIcon size={16} /> },
   ];
 
   const handleDrop = (e) => {
@@ -62,6 +62,13 @@ export default function Verify({ onNotify, walletAddress }) {
     if (f) { setFile(f); setResult(null); setError(''); }
   };
 
+  const generateHash = async (file) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
   const doVerify = async () => {
     if (!file) return;
     setLoading(true);
@@ -69,33 +76,42 @@ export default function Verify({ onNotify, walletAddress }) {
     setActiveStep(1);
 
     try {
-      await delay(1200); // UI feel
+      // Step 1: Compute Hash
+      await generateHash(file);
+      await delay(800);
       setActiveStep(2);
-      await delay(1200);
-      setActiveStep(3);
 
+      // Step 2: Prepare Request
+      console.log("Sending fileId:", fileIdParam);
       const formData = new FormData();
       formData.append('file', file);
-      // Optional: if we came from a specific file ID, we could pass it to the backend for extra validation
       if (fileIdParam) formData.append('fileId', fileIdParam);
 
+      // Step 3: Backend Verification
       const response = await fetch(
         `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/verify`,
         { method: 'POST', body: formData }
       );
 
-      if (!response.ok) throw new Error('Network response was not ok');
-      const data = await response.json();
+      if (!response.ok) throw new Error('Verification service unavailable');
 
-      await delay(1000);
+      const data = await response.json();
+      setActiveStep(3);
+      await delay(800);
+
       setResult(data);
 
       if (typeof onNotify === 'function') {
-        const isMatch = data.isMatch || data.status === 'valid';
-        onNotify(
-          isMatch ? '✅ File integrity verified!' : '⚠️ Tamper detected!',
-          isMatch ? 'success' : 'error'
-        );
+        const status = data.status?.toUpperCase();
+        if (status === 'VALID') {
+          onNotify('✅ File integrity verified!', 'success');
+        } else if (status === 'TAMPERED') {
+          onNotify('⚠️ Tamper detected!', 'error');
+        } else if (status === 'NOT_SYNCED') {
+          onNotify('🟠 Not synced with blockchain', 'warning');
+        } else if (status === 'NOT_FOUND' || status === 'NOT_REGISTERED') {
+          onNotify('🚫 File not found in system', 'info');
+        }
       }
     } catch (err) {
       setError(err.message || 'Verification failed. Please try again.');
@@ -104,6 +120,7 @@ export default function Verify({ onNotify, walletAddress }) {
       setActiveStep(0);
     }
   };
+
 
   const reset = () => {
     setFile(null);
@@ -119,9 +136,91 @@ export default function Verify({ onNotify, walletAddress }) {
 
   const shortHash = (h) => h ? `${h.slice(0, 14)}...${h.slice(-10)}` : '—';
 
-  const isValid = result?.isMatch === true ||
-    result?.status?.toLowerCase() === 'valid' ||
-    result?.finalStatus?.toLowerCase() === 'safe';
+  const getStatusConfig = () => {
+    // Deriving status based on user's requested logic
+    let status = (result?.status || 'UNKNOWN').toUpperCase();
+    
+    const currentHash = result?.currentHash;
+    const originalHash = result?.originalHash;
+    const blockchainHash = result?.blockchainHash;
+
+    if (result) {
+      if (status === 'NOT_FOUND' || status === 'NOT_REGISTERED') {
+        // Keep as NOT_FOUND
+      } else if (!blockchainHash) {
+        status = 'NOT_SYNCED';
+      } else if (currentHash !== originalHash) {
+        status = 'TAMPERED';
+      } else if (currentHash === originalHash) {
+        status = 'VALID';
+      }
+    }
+
+    console.log("[VERIFY UI] Derived Status:", status, { currentHash, originalHash, blockchainHash });
+
+    switch (status) {
+      case 'VALID':
+        return {
+          class: 'valid',
+          badge: 'Verified Authentic',
+          title: '✔ This file is safe and unchanged',
+          desc: 'We have confirmed this file matches its official record. No changes were detected.',
+          color: 'var(--accent-teal)',
+          icon: <ShieldCheck size={48} />,
+          bg: 'rgba(45, 212, 191, 0.1)',
+          shadow: '0 0 30px rgba(45, 212, 191, 0.2)'
+        };
+      case 'TAMPERED':
+        return {
+          class: 'tampered',
+          badge: 'Modification Detected',
+          title: '⚠ This file has been modified',
+          desc: 'Warning: This file does not match the original record. It may have been edited or corrupted.',
+          color: 'var(--accent-red)',
+          icon: <AlertTriangle size={48} />,
+          bg: 'rgba(239, 68, 68, 0.1)',
+          shadow: '0 0 30px rgba(239, 68, 68, 0.2)'
+        };
+      case 'NOT_SYNCED':
+        return {
+          class: 'warning',
+          badge: 'Sync Pending',
+          title: '⚠ File not fully verified on blockchain',
+          desc: 'The file is in our records but the final blockchain proof is still being processed. Please check back shortly.',
+          color: '#F59E0B',
+          icon: <RefreshCw size={48} />,
+          bg: 'rgba(245, 158, 11, 0.1)',
+          shadow: '0 0 30px rgba(245, 158, 11, 0.2)'
+        };
+      case 'NOT_FOUND':
+      case 'NOT_REGISTERED':
+        return {
+          class: 'grey',
+          badge: 'Not Found',
+          title: '🚫 This file was not found in the system',
+          desc: 'We could not find any record of this file. Please make sure you are uploading the correct file.',
+          color: '#9CA3AF',
+          icon: <Search size={48} />,
+          bg: 'rgba(156, 163, 175, 0.1)',
+          shadow: '0 0 30px rgba(156, 163, 175, 0.2)'
+        };
+      default:
+        // Fallback for safety, but try to avoid UNKNOWN
+        return {
+          class: 'tampered',
+          badge: 'Status Error',
+          title: 'Unable to Verify',
+          desc: 'We encountered an issue determining the status. Please try re-uploading the file.',
+          color: 'var(--accent-red)',
+          icon: <AlertTriangle size={48} />,
+          bg: 'rgba(239, 68, 68, 0.1)',
+          shadow: '0 0 30px rgba(239, 68, 68, 0.2)'
+        };
+    }
+  };
+
+  const statusConfig = result ? getStatusConfig() : null;
+  const isValid = result?.status?.toUpperCase() === 'VALID';
 
   return (
     <motion.div className="verify-container" variants={pageVariants} initial="initial" animate="animate">
@@ -129,8 +228,12 @@ export default function Verify({ onNotify, walletAddress }) {
       {/* Page Header */}
       <div className="ph">
         <div>
-          <h1>Protocol Audit</h1>
-          <p>Multi-layer validation against Database, Ledger, and Smart Contract</p>
+          <h1>🔍 Verify Your File</h1>
+          <p style={{ marginTop: 8 }}>Upload your file again to check if it has been changed or tampered with.</p>
+          <div style={{ display: 'flex', gap: 16, marginTop: 12, fontSize: 13 }}>
+            <span style={{ color: 'var(--accent-teal)' }}>✔ If the file is the same → It will be verified</span>
+            <span style={{ color: 'var(--accent-red)' }}>⚠ If the file was changed → It will be marked as modified</span>
+          </div>
         </div>
         {(file || result) && (
           <button className="ref-btn" onClick={reset}>
@@ -192,9 +295,9 @@ export default function Verify({ onNotify, walletAddress }) {
                       <div className="v-file-icon" style={{ width: 64, height: 64, color: 'var(--accent-cyan)', background: 'rgba(0, 212, 255, 0.05)' }}>
                         <UploadCloud size={32} />
                       </div>
-                      <div style={{ fontSize: 16, fontWeight: 700 }}>Drop file to verify</div>
-                      <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>
-                        Drag & drop or click to browse. We'll verify its hash against the blockchain.
+                      <div style={{ fontSize: 16, fontWeight: 700 }}>No file selected</div>
+                      <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+                        👉 Choose the same file you uploaded earlier to verify its integrity
                       </div>
                       {fileIdParam && (
                         <div style={{ marginTop: 10, fontSize: 11, padding: '4px 12px', background: 'rgba(167, 139, 250, 0.1)', color: '#A78BFA', borderRadius: 20 }}>
@@ -209,9 +312,10 @@ export default function Verify({ onNotify, walletAddress }) {
                   className="v-btn-execute"
                   disabled={!file}
                   onClick={doVerify}
+                  title="Check if this file has been changed"
                 >
                   <ShieldCheck size={20} />
-                  EXECUTE TRIPLE-CHECK
+                  Check File Integrity
                 </button>
               </div>
             ) : (
@@ -219,7 +323,7 @@ export default function Verify({ onNotify, walletAddress }) {
               <div className="v-card v-processing-card">
                 <Loader2 size={48} className="spin" style={{ color: 'var(--accent-cyan)', marginBottom: 20 }} />
                 <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Auditing Integrity...</div>
-                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 32 }}>Please do not close this window while we verify the cryptographic signatures.</div>
+                <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 32 }}>Please do not close this window while we verify the official digital seal.</div>
 
                 <div className="v-processing-steps">
                   {STEPS.map((step) => {
@@ -245,28 +349,30 @@ export default function Verify({ onNotify, walletAddress }) {
         {/* Result View */}
         {result && (
           <motion.div key="result" variants={scalePop} initial="initial" animate="animate">
-            <div className={`v-card v-result-verdict ${isValid ? 'valid' : 'tampered'}`}>
-              <div className={`v-status-badge ${isValid ? 'valid' : 'tampered'}`}>
-                {isValid ? 'Protocol Verified' : 'Security Warning'}
+            <div className={`v-card v-result-verdict ${statusConfig.class}`}>
+              <div className={`v-status-badge ${statusConfig.class}`}>
+                {statusConfig.badge}
               </div>
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
-                {isValid ? (
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(45, 212, 191, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-teal)', boxShadow: '0 0 30px rgba(45, 212, 191, 0.2)' }}>
-                    <ShieldCheck size={48} />
-                  </div>
-                ) : (
-                  <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(239, 68, 68, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--accent-red)', boxShadow: '0 0 30px rgba(239, 68, 68, 0.2)' }}>
-                    <AlertTriangle size={48} />
-                  </div>
-                )}
+                <div style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: statusConfig.bg,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: statusConfig.color,
+                  boxShadow: statusConfig.shadow
+                }}>
+                  {statusConfig.icon}
+                </div>
               </div>
-              <h2 className="v-verdict-title" style={{ color: isValid ? 'var(--accent-teal)' : 'var(--accent-red)' }}>
-                {isValid ? 'AUTHENTIC' : 'TAMPERED'}
+              <h2 className="v-verdict-title" style={{ color: statusConfig.color }}>
+                {statusConfig.title}
               </h2>
               <p className="v-verdict-desc">
-                {isValid
-                  ? 'This file is authentic. All cryptographic signatures match the immutable blockchain records.'
-                  : 'File mismatch detected. The current file hash does not match the original record stored on the blockchain.'}
+                {statusConfig.desc}
               </p>
             </div>
 
@@ -274,24 +380,37 @@ export default function Verify({ onNotify, walletAddress }) {
               {/* Original Hash */}
               <div className="v-hash-box">
                 <div className="v-hash-label">
-                  <Database size={14} /> Original Record
+                  <Database size={14} /> Original Identity
                 </div>
                 <div className="v-hash-value-wrap">
-                  <div className="v-hash-value">{shortHash(result.originalHash || result.blockchainHash)}</div>
-                  <button className="v-copy-btn" onClick={() => copyText(result.originalHash || result.blockchainHash, 'orig')}>
+                  <div className="v-hash-value">{shortHash(result.originalHash)}</div>
+                  <button className="v-copy-btn" onClick={() => copyText(result.originalHash, 'orig')}>
                     {copied === 'orig' ? <CheckCircle size={14} /> : <Clipboard size={14} />}
                   </button>
                 </div>
               </div>
 
-              {/* Current Hash */}
+              {/* Blockchain Hash */}
               <div className="v-hash-box">
                 <div className="v-hash-label">
-                  <FileCheck size={14} /> Current File
+                  <LinkIcon size={14} /> Digital Seal
                 </div>
-                <div className="v-hash-value-wrap" style={{ borderColor: isValid ? 'rgba(45, 212, 191, 0.3)' : 'rgba(239, 68, 68, 0.3)' }}>
-                  <div className="v-hash-value" style={{ color: isValid ? 'var(--accent-teal)' : 'var(--accent-red)' }}>
-                    {shortHash(result.currentHash)}
+                <div className="v-hash-value-wrap">
+                  <div className="v-hash-value">{shortHash(result.blockchainHash)}</div>
+                  <button className="v-copy-btn" onClick={() => copyText(result.blockchainHash, 'chain')}>
+                    {copied === 'chain' ? <CheckCircle size={14} /> : <Clipboard size={14} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Current Hash */}
+              <div className="v-hash-box" style={{ gridColumn: 'span 2' }}>
+                <div className="v-hash-label">
+                  <FileCheck size={14} /> Current File Identity
+                </div>
+                <div className="v-hash-value-wrap" style={{ borderColor: statusConfig.color + '4D' }}>
+                  <div className="v-hash-value" style={{ color: statusConfig.color }}>
+                    {result.currentHash}
                   </div>
                   <button className="v-copy-btn" onClick={() => copyText(result.currentHash, 'curr')}>
                     {copied === 'curr' ? <CheckCircle size={14} /> : <Clipboard size={14} />}
@@ -300,9 +419,10 @@ export default function Verify({ onNotify, walletAddress }) {
               </div>
             </div>
 
+
             {/* Verification Proofs */}
             <div className="v-card" style={{ marginBottom: 20 }}>
-              <div className="pf-section-label" style={{ marginBottom: 16 }}>Audit Proofs</div>
+              <div className="pf-section-label" style={{ marginBottom: 16 }}>Official Record</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div className="pf-info-row">
                   <span className="pf-info-key">Database Check</span>
