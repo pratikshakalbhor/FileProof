@@ -18,17 +18,18 @@ const fmtDate = dt =>
 
 
 function StatusBadge({ status, isExpired }) {
+  const s = (status || '').toLowerCase();
   if (isExpired) return (
     <span className="badge" style={{ background: 'rgba(252,165,165,0.1)', color: '#fca5a5', border: '1px solid rgba(252,165,165,0.3)', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       <AlertTriangle size={11} /> EXPIRED
     </span>
   );
-  if (status === 'valid') return (
+  if (s === 'valid') return (
     <span className="badge" style={{ background: 'rgba(0,200,150,0.1)', color: 'var(--accent-teal)', border: '1px solid rgba(0,200,150,0.3)', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       <CheckCircle size={11} /> VALID
     </span>
   );
-  if (status === 'tampered') return (
+  if (s === 'tampered') return (
     <span className="badge" style={{ background: 'rgba(255,68,68,0.1)', color: 'var(--accent-red)', border: '1px solid rgba(255,68,68,0.3)', borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
       <AlertTriangle size={11} /> TAMPERED
     </span>

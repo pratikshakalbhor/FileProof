@@ -25,8 +25,9 @@ export default function PublicVerify() {
   if (error) return <div className="page-inner"><div className="error-box"><AlertTriangle size={18} /> {error}</div></div>;
   if (!data) return <div className="page-inner"><div className="empty">No record found.</div></div>;
 
-  const isValid = data.status === 'valid';
-  const isTampered = data.status === 'tampered';
+  const s = (data.status || '').toLowerCase();
+  const isValid = s === 'valid';
+  const isTampered = s === 'tampered';
 
   return (
     <div className="page-inner" style={{ maxWidth: 700, margin: '40px auto' }}>
