@@ -1,0 +1,107 @@
+[
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "fileHash",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "FileRegistered",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "fileHash",
+				"type": "string"
+			}
+		],
+		"name": "registerFile",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "fileHash",
+				"type": "string"
+			}
+		],
+		"name": "fileExists",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "user",
+				"type": "address"
+			}
+		],
+		"name": "getOwnerFiles",
+		"outputs": [
+			{
+				"internalType": "string[]",
+				"name": "",
+				"type": "string[]"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "fileHash",
+				"type": "string"
+			}
+		],
+		"name": "verifyFile",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "valid",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+]
