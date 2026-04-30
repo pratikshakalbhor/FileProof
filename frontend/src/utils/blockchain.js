@@ -13,7 +13,7 @@ const getContractInstance = async () => {
 
   // Validate contract address (env var OR hardcoded fallback)
   // Check for both REACT_APP_ (CRA) and VITE_ (Vite) prefixes
-  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || import.meta?.env?.VITE_CONTRACT_ADDRESS || process.env.VITE_CONTRACT_ADDRESS || HARDCODED_ADDRESS;
+  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || HARDCODED_ADDRESS;
   if (!contractAddress || !ethers.isAddress(contractAddress)) {
     throw new Error(`Invalid CONTRACT_ADDRESS: "${contractAddress}". Check .env file.`);
   }
@@ -134,7 +134,7 @@ export const sealFileOnChain = async (fileData) => {
 // getFileFromChain — Read-only: fetch sealed file data
 // ─────────────────────────────────────────────────────────────────
 export const getFileFromChain = async (fileId) => {
-  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || import.meta?.env?.VITE_CONTRACT_ADDRESS || process.env.VITE_CONTRACT_ADDRESS || HARDCODED_ADDRESS;
+  const contractAddress = process.env.REACT_APP_CONTRACT_ADDRESS || HARDCODED_ADDRESS;
   if (!contractAddress || !ethers.isAddress(contractAddress)) {
     throw new Error('Invalid CONTRACT_ADDRESS');
   }
@@ -146,7 +146,7 @@ export const getFileFromChain = async (fileId) => {
     console.log("Using JsonRpcProvider (Fallback) for read-only call");
   }
   
-  const rpcUrl = process.env.REACT_APP_RPC_URL || import.meta?.env?.VITE_RPC_URL || process.env.VITE_RPC_URL || 'https://rpc.sepolia.org';
+  const rpcUrl = process.env.REACT_APP_RPC_URL || 'https://rpc.sepolia.org';
   const provider = window.ethereum
     ? new ethers.BrowserProvider(window.ethereum)
     : new ethers.JsonRpcProvider(rpcUrl);
