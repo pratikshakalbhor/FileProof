@@ -87,7 +87,12 @@ export default function Upload({ walletAddress }) {
       console.log('✅ Backend response:', data);
 
       const file_ = data.file || data;
+      const isDuplicate = data.isDuplicate === true;
       clearInterval(stepTimer);
+
+      if (isDuplicate) {
+        toast.success("File metadata already exists in vault. Sealing on blockchain...");
+      }
 
       // ── STEP 2: MetaMask — sealFile on blockchain ──
       setActiveStep('chain');
@@ -101,7 +106,7 @@ export default function Upload({ walletAddress }) {
       try {
         console.log('Prompting MetaMask for registerFile...');
         const blockchainResult = await sealFileOnBlockchain({
-          fileHash: file_.fileHash
+          fileHash: file_.fileHash || file_.hash || data.fileHash
         });
 
         // ── TX Confirmation ──
@@ -110,18 +115,56 @@ export default function Upload({ walletAddress }) {
         setChainStatus('confirmed');
         console.log('✅ Blockchain confirmed! TxHash:', txHash);
 
+        // ── STEP 3: Update Backend with ACTUAL txHash ──
+        if (txHash && txSuccess) {
+           console.log('🔄 Syncing txHash with backend...');
+           const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+           const fileId = file_.fileId || data.fileId;
+           // Save TX hash to backend
+           const response = await fetch(`${API_URL}/api/files/${fileId}/tx`, {
+             method: 'PATCH',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify({
+               txHash: blockchainResult.txHash,
+               blockNumber: blockchainResult.blockNumber
+             })
+           });
+           
+           if (response.ok) {
+              console.log('✅ Backend synced with txHash');
+           }
+        }
+        
+        // Create notification via API
+        try {
+          await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/notifications`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              wallet:  walletAddress,
+              message: `✅ File '${file.name}' uploaded & sealed on blockchain`,
+              type:    'success',
+              fileId:  file_.fileId || data.fileId,
+            })
+          });
+        } catch (e) {
+          // Notification save optional — don't block upload
+        }
+
       } catch (chainErr) {
         console.warn('⚠️ Blockchain error:', chainErr.message);
 
-        if (chainErr.code === 'USER_REJECTED') {
-          // Graceful rejection — don't crash, show warning
+        if (chainErr.code === 'USER_REJECTED' || chainErr.message?.includes('rejected')) {
           setChainStatus('rejected');
-          toast.error('⚠️ MetaMask transaction rejected. Your file was saved to backend, but NOT sealed on-chain.');
+          toast.error('⚠️ MetaMask transaction rejected. File stored, but not sealed.');
+        } else if (chainErr.message?.includes('Already registered')) {
+          setChainStatus('confirmed');
+          txSuccess = true;
+          toast.success('File already verified on blockchain.');
         } else {
           setChainStatus('rejected');
           toast.error(`Blockchain error: ${chainErr.message}`);
         }
-        // File still saved in backend — continue to 'done' with null txHash
       }
 
       file_.txHash   = txHash;
@@ -223,16 +266,18 @@ export default function Upload({ walletAddress }) {
                 </span>
               </DetailRow>
               <DetailRow label="Digital Seal">
-                {sealed ? (
+                {sealed && file_.txHash && file_.txHash.length === 66 ? (
                   <a
                     href={`https://sepolia.etherscan.io/tx/${file_.txHash}`}
                     target="_blank" rel="noreferrer"
                     style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--accent-purple)', wordBreak: 'break-all' }}
                   >
-                    {(file_.txHash || '').slice(0, 35)}...
+                    {file_.txHash}
                   </a>
                 ) : (
-                  <span style={{ fontSize: 10, color: '#fca5a5' }}>Not sealed — MetaMask rejected</span>
+                  <span style={{ fontSize: 10, color: '#fca5a5' }}>
+                    {file_.txHash ? 'Invalid Record' : 'Not sealed — MetaMask rejected'}
+                  </span>
                 )}
               </DetailRow>
               {file_.cloudURL || file_.ipfsURL ? (
@@ -253,7 +298,7 @@ export default function Upload({ walletAddress }) {
           </div>
           
           {/* Etherscan Direct Button */}
-          {file_.txHash && !file_.txHash.startsWith("Failed") && (
+          {file_.txHash && file_.txHash.length === 66 && (
             <div className="btn-row" style={{ marginTop: 8 }}>
                <a
                   href={`https://sepolia.etherscan.io/tx/${file_.txHash}`}

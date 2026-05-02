@@ -6,19 +6,23 @@ import (
 	"os"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var DB *mongo.Database
 
-func ConnectDB() {
-	mongoURI := os.Getenv("MONGODB_URI")
+func ConnectDB() (*mongo.Client, error) {
+	mongoURI := os.Getenv("MONGO_URI")
 	if mongoURI == "" {
-		log.Fatal("MONGODB_URI nahi mila .env madhe!")
+		mongoURI = os.Getenv("MONGODB_URI") // Fallback
+	}
+	
+	if mongoURI == "" {
+		log.Println("⚠️ MONGO_URI not found in environment")
 	}
 
-	// MongoDB connect karo
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -29,7 +33,7 @@ func ConnectDB() {
 
 	client, err := mongo.Connect(ctx, clientOptions)
 	if err != nil {
-		log.Fatal("MongoDB connect error:", err)
+		return nil, err
 	}
 
 	// Connection test karo
@@ -38,11 +42,23 @@ func ConnectDB() {
 	
 	err = client.Ping(pingCtx, nil)
 	if err != nil {
-		log.Fatal("MongoDB ping error:", err)
+		return nil, err
 	}
 
 	DB = client.Database("cryptovault")
-	log.Println(" MongoDB Connected!")
+
+	// ── Create Indexes ──
+	col := DB.Collection("files")
+	col.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "fileId", Value: 1}},
+		Options: options.Index().SetUnique(true).SetSparse(true),
+	})
+	col.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys: bson.D{{Key: "walletAddress", Value: 1}},
+	})
+
+	log.Println("✅ MongoDB Connected & Indexes verified!")
+	return client, nil
 }
 
 func GetCollection(name string) *mongo.Collection {

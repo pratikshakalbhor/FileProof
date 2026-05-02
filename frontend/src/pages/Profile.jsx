@@ -104,8 +104,8 @@ export default function Profile({ walletAddress, onLogout }) {
   const fetchData = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const [fRes, sRes] = await Promise.all([getAllFiles(walletAddress), getStats()]);
-      const files = fRes.files || [];
+      const [fRes, sRes] = await Promise.all([getAllFiles(walletAddress), getStats(walletAddress)]);
+      const files = fRes.data || [];
       const s = sRes.stats || sRes || {};
       setStats({
         total:    s.total    || files.length                                   || 0,

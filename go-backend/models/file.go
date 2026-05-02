@@ -15,13 +15,13 @@ type VersionRecord struct {
 type FileRecord struct {
 	FileID        string          `json:"fileId"        bson:"fileId"`
 	PublicID      string          `json:"publicId"      bson:"publicId"` // Navin — public verification sathi
-	Filename      string          `json:"filename"      bson:"filename"`
+	Filename      string          `json:"fileName"      bson:"fileName"`
 	OriginalHash  string          `json:"originalHash"  bson:"originalHash"`
 	EncryptedURL  string          `json:"encryptedURL"  bson:"encryptedURL"`
 	IpfsCID       string          `json:"ipfsCID"       bson:"ipfsCID"` // Source of truth CID
 	FileSize      int64           `json:"fileSize"      bson:"fileSize"`
 	MimeType      string          `json:"mimeType"      bson:"mimeType"`
-	WalletAddress string          `json:"walletAddress" bson:"walletAddress"`
+	WalletAddress string          `json:"owner"         bson:"walletAddress"`
 	TxHash        string          `json:"txHash"        bson:"txHash"`
 	Status        string          `json:"status"        bson:"status"`
 	IsRevoked     bool            `json:"isRevoked"     bson:"isRevoked"`

@@ -6,6 +6,7 @@ import {
   FileText, RefreshCw, Search, ShieldCheck, X, QrCode, Share2, Trash2
 } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import toast from 'react-hot-toast';
 
 // ── Helpers ──────────────────────────────────────────────────────────
 const fmtSize = b =>
@@ -107,9 +108,9 @@ function ShareModal({ file, onClose }) {
           <div>
             <div style={{ fontSize: 15, fontWeight: 700 }}>Share File</div>
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-              {(file.filename || file.name || 'File').length > 32
-                ? (file.filename || file.name || 'File').slice(0, 29) + '...'
-                : (file.filename || file.name || 'File')}
+              {(file.fileName || file.name || 'File').length > 32
+                ? (file.fileName || file.name || 'File').slice(0, 29) + '...'
+                : (file.fileName || file.name || 'File')}
             </div>
           </div>
         </div>
@@ -179,7 +180,7 @@ export default function MyFiles({ walletAddress }) {
     setLoading(true); setError('');
     try {
       const res = await getAllFiles(walletAddress);
-      setFiles(res.files || []);
+      setFiles(res.data || []);
     } catch (err) {
       setError(err.message || 'Failed to load files');
     } finally {
@@ -196,7 +197,8 @@ export default function MyFiles({ walletAddress }) {
       // We need to import trashFile from api.js first
       const { trashFile } = await import('../utils/api');
       await trashFile(fileId);
-      setFiles(files.filter(f => f.fileId !== fileId && f.id !== fileId));
+      toast.success("File moved to trash");
+      await fetchFiles(); // Requirement #1: Remove stale UI data
     } catch (err) {
       alert(err.message || "Failed to move to trash");
     } finally {
@@ -207,7 +209,7 @@ export default function MyFiles({ walletAddress }) {
   // ── Filter ──
   const q = query.trim().toLowerCase();
   const filtered = files.filter(f =>
-    (f.filename || f.name || '').toLowerCase().includes(q)
+    (f.fileName || f.name || '').toLowerCase().includes(q)
   );
 
   return (
@@ -298,7 +300,7 @@ export default function MyFiles({ walletAddress }) {
             <tbody>
               {filtered.map(f => {
                 const fileId = f.fileId || f.id;
-                const name = f.filename || f.name || 'Unknown';
+                const name = f.fileName || f.name || 'Unknown';
                 const txHash = f.txHash || '';
                 const isExpired = f.isExpired || (f.expiryDate && new Date(f.expiryDate) < new Date());
 
@@ -325,7 +327,7 @@ export default function MyFiles({ walletAddress }) {
 
                     {/* TX Hash — clickable Etherscan link */}
                     <td>
-                      {txHash ? (
+                      {txHash && txHash.length === 66 ? ( // Requirement #3: Validate txHash
                         <a
                           href={`https://sepolia.etherscan.io/tx/${txHash}`}
                           target="_blank" rel="noreferrer"
@@ -336,7 +338,7 @@ export default function MyFiles({ walletAddress }) {
                           <ExternalLink size={10} />
                         </a>
                       ) : (
-                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>—</span>
+                        <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{txHash ? 'Invalid/Pending' : '—'}</span>
                       )}
                     </td>
 

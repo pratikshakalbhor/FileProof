@@ -12,10 +12,9 @@ const FALLBACK_ADDRESS = "0x0E89b6130955fE7007915D89DC44F2f60291732f";
 const getContract = async (withSigner = false) => {
   if (!window.ethereum) throw new Error("MetaMask not found!");
 
-  // Use priority: REACT_APP_CONTRACT_ADDRESS > REACT_APP_FILE_REGISTRY_ADDRESS > REACT_APP_CRYPTO_VAULT_ADDRESS > FALLBACK
-  const contractAddress = 
-    process.env.REACT_APP_CONTRACT_ADDRESS || 
-    process.env.REACT_APP_FILE_REGISTRY_ADDRESS || 
+  const contractAddress =
+    process.env.REACT_APP_CONTRACT_ADDRESS ||
+    process.env.REACT_APP_FILE_REGISTRY_ADDRESS ||
     process.env.REACT_APP_CRYPTO_VAULT_ADDRESS ||
     FALLBACK_ADDRESS;
 
@@ -31,14 +30,14 @@ const getContract = async (withSigner = false) => {
   }
 
   const provider = new ethers.BrowserProvider(window.ethereum);
-  
+
   if (withSigner) {
     const signer = await provider.getSigner();
     const address = await signer.getAddress();
     console.log("Using contract:", contractAddress, "with signer:", address);
     return new ethers.Contract(contractAddress, ABI, signer);
   }
-  
+
   return new ethers.Contract(contractAddress, ABI, provider);
 };
 
@@ -51,11 +50,16 @@ export const sealFileOnBlockchain = async (fileData) => {
     console.log("TX sent:", tx.hash);
 
     const receipt = await tx.wait();
-    console.log("TX confirmed:", receipt.hash);
+
+    const txHash = receipt.hash || receipt.transactionHash;
+    if (!txHash || !txHash.startsWith('0x')) {
+      throw new Error('Invalid TX hash received');
+    }
+    console.log("✅ Blockchain confirmed! TX HASH:", txHash);
 
     return {
       success:     true,
-      txHash:      receipt.hash,
+      txHash:      txHash,
       blockNumber: receipt.blockNumber,
     };
   } catch (err) {
@@ -82,8 +86,11 @@ export const verifyFileOnChain = async (fileHash) => {
   }
 };
 
-export const getTxUrl = (txHash) =>
-  `https://sepolia.etherscan.io/tx/${txHash}`;
+// ✅ Valid Sepolia Etherscan link
+export const getTxUrl = (txHash) => {
+  if (!txHash || txHash.length !== 66 || !txHash.startsWith("0x")) return "#";
+  return `https://sepolia.etherscan.io/tx/${txHash}`;
+};
 
 export const getAddressUrl = (addr) =>
   `https://sepolia.etherscan.io/address/${addr}`;

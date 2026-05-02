@@ -12,37 +12,26 @@ import (
 )
 
 func main() {
-	// .env load karo
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("Warning: .env file nahi mila — environment variables vaprto")
-		// Production madhe he normal aahe — crash nako
+	if err := godotenv.Load(); err != nil {
+		log.Println("⚠️ .env not found, using env vars")
 	}
 
-	// Debug — env variables print kara
 	log.Println("PORT:", os.Getenv("PORT"))
 
-	// MongoDB connect karo
-	database.ConnectDB()
+	// ✅ Fix: ConnectDB return value match karo
+	_, err := database.ConnectDB()
+if err != nil {
+log.Fatal("❌ DB connection failed:", err)
+}
 
-	// Gin router
 	r := gin.Default()
-	r.SetTrustedProxies([]string{"127.0.0.1"}) // ← he add kara
+	r.SetTrustedProxies(nil)
 
-	// CORS — Dynamic origin allow karo (Wildcard behavior)
+	// CORS
 	r.Use(func(c *gin.Context) {
-		origin := c.Request.Header.Get("Origin")
-
-		if origin == "" {
-			c.Header("Access-Control-Allow-Origin", "*")
-		} else {
-			c.Header("Access-Control-Allow-Origin", origin)
-		}
-
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		c.Header("Access-Control-Allow-Credentials", "true")
-
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Wallet-Address")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return
@@ -50,23 +39,16 @@ func main() {
 		c.Next()
 	})
 
-	// Home route
 	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "CryptoVault Go Backend Running!",
-			"version": "1.0.0",
-		})
+		c.JSON(200, gin.H{"message": "BlockVerify Backend ✅"})
 	})
 
-	// API routes register karo
 	routes.RegisterRoutes(r)
 
-	// Server start karo
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "5000"
 	}
-
-	log.Printf("Server running on http://localhost:%s", port)
+	log.Printf("✅ Server running on :%s", port)
 	r.Run(":" + port)
 }

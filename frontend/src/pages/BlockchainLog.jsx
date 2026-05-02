@@ -47,8 +47,8 @@ export default function BlockchainLog({ walletAddress }) {
   const fetchFiles = useCallback(async () => {
     setLoading(true); setError('');
     try {
-      const res = await getAllFiles(walletAddress);
-      setFiles(res.files || []);
+      const res = await getAllFiles(walletAddress, true);
+      setFiles(res.data || []);
     } catch (err) {
       setError(err.message || 'Failed to load transactions');
     } finally {
@@ -119,27 +119,31 @@ export default function BlockchainLog({ walletAddress }) {
               ) : shown.map(f => (
                 <tr key={f.fileId || f.id}>
                   <td>
-                    <a
-                      href={`https://sepolia.etherscan.io/tx/${f.txHash}`}
-                      target="_blank" rel="noreferrer"
-                      className="tx-h"
-                    >
-                      {f.txHash
-                        ? `${f.txHash.slice(0, 10)}...${f.txHash.slice(-6)}`
-                        : 'pending'}
-                    </a>
+                    {f.txHash && f.txHash.length === 66 ? (
+                      <a
+                        href={`https://sepolia.etherscan.io/tx/${f.txHash}`}
+                        target="_blank" rel="noreferrer"
+                        className="tx-h"
+                      >
+                        {f.txHash.slice(0, 10)}...{f.txHash.slice(-6)}
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>
+                        {f.txHash ? 'pending/invalid' : '—'}
+                      </span>
+                    )}
                   </td>
                   <td style={{ color: 'var(--text-primary)', fontSize: 12 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                       <span style={{ fontSize: 14, color: 'var(--accent-cyan)', flexShrink: 0 }}><FileText size={14} /></span>
-                      <span>{(f.filename || f.name || '').slice(0, 24)}{(f.filename || f.name || '').length > 24 ? '...' : ''}</span>
+                      <span>{(f.fileName || f.name || '').slice(0, 24)}{(f.fileName || f.name || '').length > 24 ? '...' : ''}</span>
                     </div>
                   </td>
                   <td><StatusBadge status={f.status} /></td>
                   <td>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--text-secondary)' }}>
-                      {f.walletAddress
-                        ? `${f.walletAddress.slice(0, 6)}...${f.walletAddress.slice(-4)}`
+                      {f.owner
+                        ? `${f.owner.slice(0, 6)}...${f.owner.slice(-4)}`
                         : '—'}
                     </span>
                   </td>

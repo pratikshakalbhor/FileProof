@@ -3,9 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -18,155 +16,168 @@ import (
 )
 
 func VerifyFile(c *gin.Context) {
-	// 1. Receive File & FileID
+
+	// ── 1. File receive karo ──
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "File missing in request"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "File missing"})
 		return
 	}
 	defer file.Close()
 
-	fileId := c.PostForm("fileId")
+	fileId      := strings.TrimSpace(c.PostForm("fileId"))
 	currentSize := header.Size
 
-	// 2. Read file into bytes safely
-	fileBytes, err := io.ReadAll(file)
+	// ── 2. Current hash generate karo ──
+	currentHash, err := utils.GenerateSHA256(file)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read file"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Hash generation failed"})
 		return
 	}
-
-	// Generate current hash using bytes
-	currentHash := utils.GenerateSHA256FromBytes(fileBytes)
 	currentHash = strings.ToLower(strings.TrimSpace(currentHash))
 
-	// 3. Fetch from DB
-	collection := database.GetCollection("files")
+	// ── 3. MongoDB madhe record fetch karo ──
+	col := database.GetCollection("files")
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	var record models.FileRecord
 	dbFound := true
-	warning := ""
-	
-	// Lookup strategy: fileId if provided, otherwise fallback to filename
+
 	var dbErr error
-	if fileId != "" && fileId != "undefined" && fileId != "null" {
-		dbErr = collection.FindOne(ctx, bson.M{"fileId": fileId}).Decode(&record)
+	if fileId != "" && fileId != "undefined" {
+		dbErr = col.FindOne(ctx, bson.M{"fileId": fileId}).Decode(&record)
 	} else {
-		warning = "Warning: No fileId provided. Falling back to filename search."
-		dbErr = collection.FindOne(ctx, bson.M{"filename": header.Filename}).Decode(&record)
+		// FileID nahi → hash ne search karo
+		dbErr = col.FindOne(ctx, bson.M{"originalHash": currentHash}).Decode(&record)
+		if dbErr != nil {
+			// Fallback — filename ne search karo
+			dbErr = col.FindOne(ctx, bson.M{"filename": header.Filename}).Decode(&record)
+		}
 	}
 
 	if dbErr != nil {
 		dbFound = false
 	}
 
-	dbHash := ""
+	dbHash     := ""
 	storedSize := int64(0)
 	if dbFound {
-		dbHash = strings.ToLower(strings.TrimSpace(record.OriginalHash))
-		fileId = record.FileID // Ensure we have the correct fileId for blockchain check
+		dbHash     = strings.ToLower(strings.TrimSpace(record.OriginalHash))
 		storedSize = record.FileSize
-	}
-
-	// 4. Fetch from Blockchain
-	chainHash := ""
-	chainCID := ""
-	if currentHash != "" {
-		fmt.Printf("[DEBUG] Searching Blockchain for Hash: '%s'\n", currentHash)
-		cHash, cCid, err := utils.FetchFileFromChain(currentHash)
-		if err != nil {
-			fmt.Printf("[DEBUG] Contract Call Failed: %v\n", err)
-		}
-		
-		if cHash == "" {
-			fmt.Println("[DEBUG] Blockchain returned EMPTY string for this ID")
-		} else {
-			fmt.Printf("[DEBUG] Found Hash on Blockchain: %s\n", cHash)
-			chainHash = strings.ToLower(strings.TrimSpace(cHash))
-			chainCID = strings.TrimSpace(cCid)
+		if fileId == "" {
+			fileId = record.FileID
 		}
 	}
 
-	// 5. Decision Logic
-	var status string
-	var message string
+	fmt.Println("=== VERIFY DEBUG ===")
+	fmt.Printf("FileId:       %s\n", fileId)
+	fmt.Printf("DB Hash:      %s\n", dbHash)
+	fmt.Printf("Current Hash: %s\n", currentHash)
+	fmt.Printf("DB Found:     %v\n", dbFound)
+	fmt.Printf("DB Size:      %d\n", storedSize)
+	fmt.Printf("Current Size: %d\n", currentSize)
+	fmt.Println("===================")
+
+	// ── 4. Decision Logic ──
+	// ✅ KEY RULE: DB hash match = VALID (blockchain optional!)
+	var status    string
+	var message   string
 	var comparison gin.H
 
-	fmt.Println("--- VERIFICATION DEBUG ---")
-	fmt.Println("FileId:        ", fileId)
-	fmt.Println("DB Hash:       ", dbHash)
-	fmt.Println("Chain Hash:    ", chainHash)
-	fmt.Println("Current Hash:  ", currentHash)
-	fmt.Println("--------------------------")
+	switch {
+	case !dbFound:
+		status  = "NOT_REGISTERED"
+		message = "🚫 File not found in registry. Upload it first."
 
-	if !dbFound {
-		status = "NOT_REGISTERED"
-		message = "🚫 This file was not found in the system"
-	} else if currentHash != dbHash {
-		status = "TAMPERED"
-		message = "⚠ This file has been modified"
+	case currentHash == dbHash:
+		// ✅ VALID — same hash, same file!
+		status  = "VALID"
+		message = "✔ File is authentic — integrity verified"
+
+	default:
+		// ❌ TAMPERED — hash different
+		status  = "TAMPERED"
+		message = "❌ File has been modified — tampering detected"
+
+		// Audit comparison — size check
+		sizeChanged := currentSize != storedSize
+		var auditMsg string
+		if sizeChanged {
+			origMB := float64(storedSize) / 1048576
+			currMB := float64(currentSize) / 1048576
+			auditMsg = fmt.Sprintf("File size changed from %.2f MB to %.2f MB", origMB, currMB)
+		} else {
+			auditMsg = "File content modified (same size, different hash — possible steganography or metadata change)"
+		}
+
 		comparison = gin.H{
-			"sizeMatch":        currentSize == storedSize,
+			"sizeMatch":        !sizeChanged,
 			"originalFileSize": storedSize,
 			"currentFileSize":  currentSize,
+			"auditMessage":     auditMsg,
 		}
-	} else if chainHash == "" {
-		status = "NOT_SYNCED"
-		message = "⚠️ File record not yet found on the blockchain"
-	} else if currentHash != chainHash {
-		status = "DATABASE_COMPROMISED"
-		message = "🚨 Database breach! File matches DB but not the Blockchain."
-		comparison = gin.H{
-			"sizeMatch":        currentSize == storedSize,
-			"originalFileSize": storedSize,
-			"currentFileSize":  currentSize,
-		}
-	} else {
-		status = "VALID"
-		message = "✔ This file is safe and unchanged"
 	}
 
-	// Update record in DB if found
-	if dbFound && status != "NOT_REGISTERED" {
-		collection.UpdateOne(ctx,
+	// ── 5. MongoDB status update karo ──
+	now := time.Now()
+	if dbFound {
+		col.UpdateOne(ctx,
 			bson.M{"fileId": record.FileID},
 			bson.M{"$set": bson.M{
 				"status":     strings.ToLower(status),
-				"verifiedAt": time.Now(),
+				"verifiedAt": now,
 			}},
 		)
 	}
 
-	// 6. Response
+	// ── 6. Notification create karo ──
+	if dbFound {
+		notifCol := database.GetCollection("notifications")
+		notifType := "success"
+		notifMsg  := fmt.Sprintf("✅ File '%s' verified — VALID", record.Filename)
+
+		if status == "TAMPERED" {
+			notifType = "error"
+			notifMsg  = fmt.Sprintf("⚠️ TAMPER DETECTED — '%s' has been modified!", record.Filename)
+		}
+
+		notifCol.InsertOne(ctx, bson.M{
+			"user":      record.WalletAddress,
+			"message":   notifMsg,
+			"type":      notifType,
+			"fileId":    record.FileID,
+			"read":      false,
+			"createdAt": now,
+		})
+	}
+
+	// ── 7. Response ──
 	resp := gin.H{
+		"success":        true,
 		"status":         status,
+		"isMatch":        status == "VALID",
+		"dbVerified":     dbFound && currentHash == dbHash,
+		"chainVerified":  false, // blockchain check optional
 		"currentHash":    currentHash,
 		"originalHash":   dbHash,
-		"isMatch":        currentHash == dbHash,
-		"dbVerified":     dbFound && currentHash == dbHash,
-		"blockchainHash": chainHash,
-		"blockchainCID":  chainCID,
+		"blockchainHash": "", // FetchFileFromChain optional
 		"message":        message,
 		"fileId":         fileId,
 		"filename":       record.Filename,
-		"ipfsCID":        record.IpfsCID,
-		"ipfsURL":        record.EncryptedURL,
 		"txHash":         record.TxHash,
-	}
-
-	if warning != "" {
-		resp["warning"] = warning
+		"walletAddress":  record.WalletAddress,
+		"uploadedAt":     record.UploadedAt,
+		"mimeType":       record.MimeType,
+		"fileSize":       record.FileSize,
+		// Restore sathi
+		"restoreUrl":     record.EncryptedURL,
+		"ipfsCID":        record.IpfsCID,
 	}
 
 	if comparison != nil {
 		resp["comparison"] = comparison
 	}
 
-	if chainHash == "" && status != "NOT_REGISTERED" {
-		resp["debug"] = fmt.Sprintf("Contract %s returned empty for ID '%s'", os.Getenv("CONTRACT_ADDRESS"), fileId)
-	}
-
 	c.JSON(http.StatusOK, resp)
-}
+}

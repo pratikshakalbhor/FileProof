@@ -16,7 +16,7 @@ export default function Trash({ walletAddress }) {
     setLoading(true);
     try {
       const res = await getTrashFiles(walletAddress);
-      setFiles(res.files || []);
+      setFiles(res.data || []);
       setError('');
     } catch (err) {
       setError(err.message || "Failed to load trash");

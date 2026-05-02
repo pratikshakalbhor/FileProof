@@ -7,6 +7,9 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +20,11 @@ import (
 	"cryptovault/utils"
 )
 
+func init() {
+	os.MkdirAll("uploads", 0755)
+	os.MkdirAll("backup", 0755)
+}
+
 func UploadFile(c *gin.Context) {
 	file, header, err := c.Request.FormFile("file")
 	if err != nil {
@@ -25,16 +33,49 @@ func UploadFile(c *gin.Context) {
 	}
 	defer file.Close()
 
-	wallet := c.PostForm("walletAddress")
+	wallet := strings.ToLower(c.PostForm("wallet"))
+	if wallet == "" {
+		wallet = strings.ToLower(c.Request.FormValue("walletAddress"))
+	}
 	parentFileId := c.PostForm("parentFileId")
 	versionNote := c.PostForm("versionNote")
 
-	// Read file
+	// 🔍 DEBUG LOGS
+	log.Printf("📥 New Upload Request:")
+	log.Printf("   Wallet: %s", wallet)
+	log.Printf("   File:   %s", header.Filename)
+
+	if wallet == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Wallet address required"})
+		return
+	}
+
+	// 📂 SAVE FILE LOCALLY
+	uploadPath := filepath.Join("uploads", header.Filename)
+	out, err := os.Create(uploadPath)
+	if err != nil {
+		log.Printf("❌ Failed to create file locally: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file locally"})
+		return
+	}
+	defer out.Close()
+
+	// Read file and write to local storage
 	fileBytes, err := io.ReadAll(file)
 	if err != nil {
+		log.Printf("❌ Failed to read uploaded file: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "File read error"})
 		return
 	}
+
+	_, err = out.Write(fileBytes)
+	if err != nil {
+		log.Printf("❌ Failed to write file locally: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save file locally"})
+		return
+	}
+
+	log.Printf("💾 File saved locally: %s", uploadPath)
 
 	// Hash
 	fileHash := utils.GenerateSHA256FromBytes(fileBytes)
@@ -53,8 +94,8 @@ func UploadFile(c *gin.Context) {
 		ipfsCID = "mock_cid_" + header.Filename
 	}
 
-	// Mock blockchain TX — Using IPFS CID as the source of truth
-	txHash := utils.MockTxHash(ipfsCID)
+	// Real blockchain TX will be stored after frontend confirmation
+	txHash := ""
 
 	fileID := fmt.Sprintf("FILE-%d", time.Now().Unix())
 	publicID := randomString(10)
@@ -107,6 +148,39 @@ func UploadFile(c *gin.Context) {
 			publicID = existing.PublicID
 		}
 	} else {
+		// 🛡️ DUPLICATE PREVENTION (Requirement #1)
+		var duplicate models.FileRecord
+		dupFilter := bson.M{
+			"walletAddress": wallet,
+			"originalHash": fileHash,
+			"isDeleted":    bson.M{"$ne": true},
+		}
+		err := collection.FindOne(ctx, dupFilter).Decode(&duplicate)
+		if err == nil {
+			log.Printf("⚠️ Duplicate file detected for wallet %s. Returning existing record.", wallet)
+			c.JSON(http.StatusOK, gin.H{
+				"message":  "File already exists",
+				"fileId":   duplicate.FileID,
+				"publicId": duplicate.PublicID,
+				"filename": duplicate.Filename,
+				"txHash":   duplicate.TxHash,
+				"isDuplicate": true,
+			})
+			return
+		}
+
+		// 🛡️ TX HASH VALIDATION (Requirement #4)
+		// Try to get txHash from frontend first, else use mock
+		clientTxHash := c.PostForm("txHash")
+		if clientTxHash != "" {
+			if !strings.HasPrefix(clientTxHash, "0x") || len(clientTxHash) != 66 {
+				log.Printf("❌ Invalid txHash provided: %s", clientTxHash)
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid transaction hash format"})
+				return
+			}
+			txHash = clientTxHash
+		}
+
 		// New file
 		record := models.FileRecord{
 			FileID:        fileID,
@@ -125,11 +199,13 @@ func UploadFile(c *gin.Context) {
 			Version:       1,
 		}
 
-		_, err = collection.InsertOne(ctx, record)
+		result, err := collection.InsertOne(ctx, record)
 		if err != nil {
-			log.Printf("MongoDB InsertOne Error: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("DB save failed: %v", err)})
+			log.Printf("❌ MongoDB INSERT ERROR: %v", err)
+			c.JSON(500, gin.H{"error": "DB save failed: " + err.Error()})
 			return
+		} else {
+			log.Printf("✅ MongoDB INSERT SUCCESS: %v", result.InsertedID)
 		}
 	}
 

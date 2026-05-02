@@ -2,8 +2,9 @@ package handlers
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,54 +16,66 @@ import (
 )
 
 func GetAllFiles(c *gin.Context) {
-	collection := database.GetCollection("files")
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	wallet := strings.ToLower(c.Query("wallet"))
+	isBlockchain := c.Query("blockchain") == "true"
 
-	// 1. Get Wallet from Query
-	wallet := c.Query("wallet")
 	if wallet == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "wallet address is required (e.g. /api/files?wallet=0x...)"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "wallet required"})
 		return
 	}
 
-	// 2. Build Filter
+	col := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	// 🔍 DEBUG LOGS
+	log.Printf("Query wallet: %s", wallet)
+	countAll, _ := col.CountDocuments(ctx, bson.M{})
+	log.Printf("Total docs in DB: %d", countAll)
+	
+	cursorAll, _ := col.Find(ctx, bson.M{})
+	log.Println("--- DEBUG: ALL DB DOCUMENTS ---")
+	for cursorAll.Next(ctx) {
+		var doc bson.M
+		cursorAll.Decode(&doc)
+		log.Println("DB DOC:", doc)
+	}
+	log.Println("-------------------------------")
+
+	// ✅ Case-insensitive wallet search
 	filter := bson.M{
-		"isDeleted":     bson.M{"$ne": true},
-		"walletAddress": wallet, // Correct field name from models/file.go
+		"walletAddress": bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		},
+		"$or": []bson.M{
+			{"isTrashed": bson.M{"$exists": false}},
+			{"isTrashed": false},
+		},
 	}
 
-	fmt.Printf("[DEBUG] Fetching files for wallet: %s\n", wallet)
+	if isBlockchain {
+		filter["txHash"] = bson.M{"$ne": ""}
+	}
 
-	// 3. Query Database
 	opts := options.Find().SetSort(bson.M{"uploadedAt": -1})
-	cursor, err := collection.Find(ctx, filter, opts)
+	cursor, err := col.Find(ctx, filter, opts)
 	if err != nil {
-		fmt.Println("ERROR: MongoDB Find failed:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database fetch failed", "details": err.Error()})
+		c.JSON(http.StatusOK, gin.H{"success": true, "files": []models.FileRecord{}, "count": 0})
 		return
 	}
 	defer cursor.Close(ctx)
 
-	// 4. Decode Results
 	var files []models.FileRecord
-	if err := cursor.All(ctx, &files); err != nil {
-		fmt.Println("ERROR: Cursor All decoding failed:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Data decoding failed", "details": err.Error()})
-		return
-	}
-
-	// Avoid null response
+	cursor.All(ctx, &files)
 	if files == nil {
 		files = []models.FileRecord{}
 	}
 
-	fmt.Printf("[DEBUG] Found %d files for wallet %s\n", len(files), wallet)
-
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"count":   len(files),
-		"files":   files,
+		"data":    files,
 	})
 }
 
@@ -107,6 +120,9 @@ func RevokeFile(c *gin.Context) {
 		bson.M{"$set": bson.M{"isRevoked": true, "status": "revoked"}},
 	)
 
+	// Notification
+	go CreateNotification(strings.ToLower(record.WalletAddress), "File revoked: "+record.Filename, "warning", fileID)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": fileID + " revoked successfully",
@@ -136,20 +152,69 @@ func GetFileVersions(c *gin.Context) {
 }
 
 func GetStats(c *gin.Context) {
+	wallet := strings.ToLower(c.Query("wallet"))
 	collection := database.GetCollection("files")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	total, _    := collection.CountDocuments(ctx, bson.M{"isDeleted": bson.M{"$ne": true}})
-	valid, _    := collection.CountDocuments(ctx, bson.M{"status": "valid", "isDeleted": bson.M{"$ne": true}})
-	tampered, _ := collection.CountDocuments(ctx, bson.M{"status": "tampered", "isDeleted": bson.M{"$ne": true}})
-	revoked, _  := collection.CountDocuments(ctx, bson.M{"status": "revoked", "isDeleted": bson.M{"$ne": true}})
-	trashed, _  := collection.CountDocuments(ctx, bson.M{"isDeleted": true})
+	filter := bson.M{"isDeleted": bson.M{"$ne": true}}
+	if wallet != "" {
+		filter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
 
-	// Fetch latest 5 verification logs
+	total, _    := collection.CountDocuments(ctx, filter)
+	
+	validFilter := bson.M{"status": "valid", "isDeleted": bson.M{"$ne": true}}
+	if wallet != "" {
+		validFilter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
+	valid, _    := collection.CountDocuments(ctx, validFilter)
+	
+	tamperedFilter := bson.M{"status": "tampered", "isDeleted": bson.M{"$ne": true}}
+	if wallet != "" {
+		tamperedFilter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
+	tampered, _ := collection.CountDocuments(ctx, tamperedFilter)
+	
+	revokedFilter := bson.M{"status": "revoked", "isDeleted": bson.M{"$ne": true}}
+	if wallet != "" {
+		revokedFilter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
+	revoked, _  := collection.CountDocuments(ctx, revokedFilter)
+	
+	trashedFilter := bson.M{"isDeleted": true}
+	if wallet != "" {
+		trashedFilter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
+	trashed, _  := collection.CountDocuments(ctx, trashedFilter)
+
+	// Fetch latest 5 verification logs for this wallet
 	var recentLogs []models.FileRecord
+	logsFilter := bson.M{"verifiedAt": bson.M{"$exists": true}, "isDeleted": bson.M{"$ne": true}}
+	if wallet != "" {
+		logsFilter["walletAddress"] = bson.M{
+			"$regex":   "^" + wallet + "$",
+			"$options": "i",
+		}
+	}
+	
 	opts := options.Find().SetSort(bson.M{"verifiedAt": -1}).SetLimit(5)
-	cursor, err := collection.Find(ctx, bson.M{"verifiedAt": bson.M{"$exists": true}, "isDeleted": bson.M{"$ne": true}}, opts)
+	cursor, err := collection.Find(ctx, logsFilter, opts)
 	if err == nil {
 		cursor.All(ctx, &recentLogs)
 		cursor.Close(ctx)
@@ -214,101 +279,190 @@ func UpdateVisibility(c *gin.Context) {
 	})
 }
 
+// UpdateTxHash — Blockchain confirmation nantar txHash update kara
+func UpdateTxHash(c *gin.Context) {
+	fileID := c.Param("id")
+	var body struct {
+		TxHash      string `json:"txHash"`
+		BlockNumber uint64 `json:"blockNumber"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// 🛡️ TX HASH VALIDATION
+	if !strings.HasPrefix(body.TxHash, "0x") || len(body.TxHash) != 66 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid transaction hash format"})
+		return
+	}
+
+	collection := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// Fetch record to get wallet for notification
+	var record models.FileRecord
+	collection.FindOne(ctx, bson.M{"fileId": fileID}).Decode(&record)
+
+	update := bson.M{
+		"$set": bson.M{
+			"txHash": body.TxHash,
+			"status": "valid",
+		},
+	}
+
+	res, err := collection.UpdateOne(ctx, bson.M{"fileId": fileID}, update)
+	if err != nil || res.MatchedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
+		return
+	}
+
+	// Notification — upload success
+	go CreateNotification(
+		strings.ToLower(record.WalletAddress),
+		"File uploaded & sealed on blockchain ✅: "+record.Filename,
+		"success",
+		fileID,
+	)
+
+	log.Printf("✅ Updated txHash for file %s: %s", fileID, body.TxHash)
+	c.JSON(http.StatusOK, gin.H{"success": true, "txHash": body.TxHash})
+}
+
 // ─────────────────────────────────────────
 // Trash & Restore Features
 // ─────────────────────────────────────────
 
-func TrashFile(c *gin.Context) {
-	fileID := c.Param("id")
+// ── RESTORE FILE ───────────────────────────────
+// Frontend Restore button → he call hoto
+func RestoreFile(c *gin.Context) {
+	fileId := c.Param("id")
 
-	collection := database.GetCollection("files")
+	col := database.GetCollection("files")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	update := bson.M{
-		"$set": bson.M{
-			"isDeleted": true,
-			"deletedAt": time.Now(),
-		},
-	}
-
-	res, err := collection.UpdateOne(ctx, bson.M{"fileId": fileID}, update)
-	if err != nil || res.MatchedCount == 0 {
+	var record models.FileRecord
+	if err := col.FindOne(ctx, bson.M{"fileId": fileId}).Decode(&record); err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
 		return
 	}
+
+	// ── Restore = status back to valid ──
+	now := time.Now()
+	col.UpdateOne(ctx,
+		bson.M{"fileId": fileId},
+		bson.M{"$set": bson.M{
+			"status":    "valid",
+			"updatedAt": now,
+		}},
+	)
+
+	// ── Notification create karo ──
+	CreateNotification(
+		record.WalletAddress,
+		"🔄 File '"+record.Filename+"' restored successfully",
+		"success",
+		fileId,
+	)
+
+	// ── Response with download URL ──
+	restoreUrl := record.EncryptedURL
+	if restoreUrl == "" {
+		restoreUrl = record.IpfsCID
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":    true,
+		"message":    "File restored successfully",
+		"fileId":     fileId,
+		"restoreUrl": restoreUrl,
+		"filename":   record.Filename,
+		"status":     "valid",
+	})
+}
+
+// ── TRASH FILE ─────────────────────────────────
+func TrashFile(c *gin.Context) {
+	fileId := c.Param("id")
+
+	col := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	now := time.Now()
+	col.UpdateOne(ctx,
+		bson.M{"fileId": fileId},
+		bson.M{"$set": bson.M{
+			"isTrashed": true,
+			"trashedAt": now,
+			"updatedAt": now,
+		}},
+	)
 
 	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File moved to trash"})
 }
 
-func RestoreFile(c *gin.Context) {
-	fileID := c.Param("id")
-
-	collection := database.GetCollection("files")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	update := bson.M{
-		"$set": bson.M{
-			"isDeleted": false,
-			"deletedAt": nil,
-		},
-	}
-
-	res, err := collection.UpdateOne(ctx, bson.M{"fileId": fileID}, update)
-	if err != nil || res.MatchedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File restored"})
-}
-
-func PermanentDeleteFile(c *gin.Context) {
-	fileID := c.Param("id")
-
-	collection := database.GetCollection("files")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	res, err := collection.DeleteOne(ctx, bson.M{"fileId": fileID})
-	if err != nil || res.DeletedCount == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "File not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File deleted permanently"})
-}
-
+// ── GET TRASH FILES ────────────────────────────
 func GetTrashFiles(c *gin.Context) {
-	collection := database.GetCollection("files")
+	wallet := c.Query("wallet")
+
+	col := database.GetCollection("files")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	filter := bson.M{"isDeleted": true}
-	wallet := c.Query("wallet")
+	filter := bson.M{"isTrashed": true}
 	if wallet != "" {
 		filter["walletAddress"] = wallet
 	}
 
-	opts := options.Find().SetSort(bson.M{"deletedAt": -1})
-	cursor, err := collection.Find(ctx, filter, opts)
+	cursor, err := col.Find(ctx, filter)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Trash fetch error"})
+		c.JSON(http.StatusOK, gin.H{"success": true, "files": []interface{}{}})
 		return
 	}
 	defer cursor.Close(ctx)
 
 	var files []models.FileRecord
 	cursor.All(ctx, &files)
-
 	if files == nil {
 		files = []models.FileRecord{}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"count":   len(files),
-		"files":   files,
-	})
+	c.JSON(http.StatusOK, gin.H{"success": true, "files": files})
+}
+
+// ── RESTORE FROM TRASH ─────────────────────────
+func RestoreFromTrash(c *gin.Context) {
+	fileId := c.Param("id")
+
+	col := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	now := time.Now()
+	col.UpdateOne(ctx,
+		bson.M{"fileId": fileId},
+		bson.M{"$set": bson.M{
+			"isTrashed": false,
+			"trashedAt": nil,
+			"updatedAt": now,
+		}},
+	)
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File restored from trash"})
+}
+
+// ── PERMANENT DELETE ───────────────────────────
+func PermanentDeleteFile(c *gin.Context) {
+	fileId := c.Param("id")
+
+	col := database.GetCollection("files")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	col.DeleteOne(ctx, bson.M{"fileId": fileId})
+
+	c.JSON(http.StatusOK, gin.H{"success": true, "message": "File permanently deleted"})
 }

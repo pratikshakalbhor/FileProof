@@ -54,7 +54,7 @@ export const uploadFile = async (
   const formData = new FormData();
 
   formData.append("file", file);
-  formData.append("walletAddress", wallet || "");
+  formData.append("wallet", wallet || "");
 
   if (expiry) formData.append("expiryDate", expiry);
   if (parentId) formData.append("parentFileId", parentId);
@@ -113,8 +113,13 @@ export const verifyFile = async (file, fileId) => {
 // 3. GET ALL FILES
 // GET /api/files?wallet=0x...
 // ─────────────────────────────────────────
-export const getAllFiles = async (walletAddress) => {
-  const query = walletAddress ? `?wallet=${walletAddress}` : "";
+export const getAllFiles = async (walletAddress, isBlockchain = false) => {
+  if (!walletAddress) return { data: [], count: 0 };
+  const wallet = walletAddress.toLowerCase();
+  let query = `?wallet=${wallet}`;
+  if (isBlockchain) {
+    query += "&blockchain=true";
+  }
   return apiFetch(`/files${query}`);
 };
 
@@ -181,6 +186,13 @@ export const updateVisibility = async (fileId, visibility, sharedWith = []) => {
   });
 };
 
+export const updateTxHash = async (fileId, txHash) => {
+  return apiFetch(`/files/${fileId}/txhash`, {
+    method: "PUT",
+    body: JSON.stringify({ txHash }),
+  });
+};
+
 // ─────────────────────────────────────────
 // Trash & Restore Features
 // ─────────────────────────────────────────
@@ -197,7 +209,8 @@ export const deleteFilePermanently = async (fileId) => {
 };
 
 export const getTrashFiles = async (walletAddress) => {
-  const query = walletAddress ? `?wallet=${walletAddress}` : "";
+  const wallet = (walletAddress || "").toLowerCase();
+  const query = wallet ? `?wallet=${wallet}` : "";
   return apiFetch(`/files/trash/all${query}`);
 };
 
@@ -205,8 +218,10 @@ export const getTrashFiles = async (walletAddress) => {
 // 6. GET STATS
 // GET /api/stats
 // ─────────────────────────────────────────
-export const getStats = async () => {
-  return apiFetch("/stats");
+export const getStats = async (walletAddress) => {
+  const wallet = (walletAddress || "").toLowerCase();
+  const query = wallet ? `?wallet=${wallet}` : "";
+  return apiFetch(`/stats${query}`);
 };
 
 // ─────────────────────────────────────────

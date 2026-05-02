@@ -38,7 +38,10 @@ const DetailedAuditReport = ({ result, onRestore }) => {
         <AlertTriangle size={16} /> Audit Findings
       </div>
       <div className="audit-explanation" style={{ padding: 12, background: 'rgba(239, 68, 68, 0.05)', borderRadius: 8, fontSize: 14, color: 'var(--text-white)', lineHeight: 1.5 }}>
-        Change detected: File size changed from {fmtSize(result.comparison.originalFileSize)} to {fmtSize(result.comparison.currentFileSize)}, indicating the file might have been tampered with.
+        {result.comparison?.sizeMatch
+          ? `File content was modified (same size: ${fmtSize(result.comparison?.originalFileSize)}, different hash). Possible metadata or content change.`
+          : `File size changed from ${fmtSize(result.comparison?.originalFileSize)} to ${fmtSize(result.comparison?.currentFileSize)}, indicating data tampering.`
+        }
       </div>
       <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={onRestore} className="restore-btn-style"
         style={{
@@ -169,17 +172,45 @@ export default function Verify({ onNotify, walletAddress }) {
     setResult(null);
   };
 
-  const handleRestore = () => {
+  const handleRestore = async () => {
     if (!result) return;
-    // Primary: use blockchainCID from the smart contract for trustless recovery
-    const cid = result.blockchainCID;
-    if (!cid || cid.startsWith('mock_')) {
-      toast.error('No authentic IPFS CID found on the blockchain.');
-      return;
+
+    const restoreUrl = result.restoreUrl || result.ipfsURL || result.encryptedUrl || result.cloudUrl;
+
+    if (restoreUrl && restoreUrl !== '' && restoreUrl !== 'N/A') {
+      // ✅ Direct download from Cloudinary/IPFS
+      const a    = document.createElement('a');
+      a.href     = restoreUrl;
+      a.download = result.filename || 'restored_file';
+      a.target   = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // Also call restore API to update status
+      try {
+        await fetch(
+          `${process.env.REACT_APP_API_URL || 'http://localhost:5000'}/api/files/${result.fileId}/restore`,
+          { method: 'POST' }
+        );
+        if (typeof onNotify === 'function') {
+          onNotify('✅ File restored successfully!', 'success');
+        }
+      } catch (err) {
+        console.error('Restore API error:', err);
+      }
+
+    } else {
+      // No URL — show file info
+      alert(
+        `Original File Details:\n\n` +
+        `Name: ${result.filename || '—'}\n` +
+        `Hash: ${result.originalHash || '—'}\n` +
+        `TX: ${result.txHash || '—'}\n\n` +
+        `Original file URL not available.\n` +
+        `Contact system administrator for manual restore.`
+      );
     }
-    const gateway = process.env.REACT_APP_IPFS_GATEWAY || 'https://gateway.pinata.cloud';
-    const url = `${gateway}/ipfs/${cid}`;
-    window.open(url, '_blank');
   };
 
   const copyText = (text, key) => {

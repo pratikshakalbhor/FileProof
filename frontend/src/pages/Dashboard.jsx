@@ -86,22 +86,22 @@ export default function Dashboard({ walletAddress }) {
 
   const fetchStats = useCallback(async () => {
     try {
-      const statsRes = await getStats();
+      const statsRes = await getStats(walletAddress);
       const s = statsRes.stats || statsRes || {};
       setStats({ total: s.total || 0, valid: s.valid || 0, tampered: s.tampered || 0, recentLogs: statsRes.recentLogs || [] });
     } catch {
       // silently ignore
     }
-  }, []);
+  }, [walletAddress]);
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError('');
     try {
       const [filesRes, statsRes] = await Promise.all([
         getAllFiles(walletAddress),
-        getStats(),
+        getStats(walletAddress),
       ]);
-      setFiles(filesRes.files || []);
+      setFiles(filesRes.data || []);
       const s = statsRes.stats || statsRes || {};
       setStats({ total: s.total || 0, valid: s.valid || 0, tampered: s.tampered || 0, recentLogs: statsRes.recentLogs || [] });
     } catch (err) {
@@ -242,7 +242,7 @@ export default function Dashboard({ walletAddress }) {
               {(stats.recentLogs || []).map(f => {
                 const isExpired = f.isExpired || (f.expiryDate && new Date(f.expiryDate) < new Date());
                 return (
-                <tr key={f.fileId || f.id} className="tr-click" onClick={() => navigate(`/files/${f.fileId || f.id}`)}>
+                <tr key={`${f.fileId || f.id}-${f.verifiedAt}`} className="tr-click" onClick={() => navigate(`/files/${f.fileId || f.id}`)}>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
                       <FileText size={16} style={{ color: 'var(--accent-cyan)' }} />
